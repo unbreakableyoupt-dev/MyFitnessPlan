@@ -1,16 +1,22 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Zap, Lock, ArrowLeft, Check } from 'lucide-react'
+import { Zap, Lock, ArrowLeft, Check, Cpu } from 'lucide-react'
 import { FormData } from '@/lib/types'
 import { PRICING_TIERS } from '@/lib/constants'
 import { getGoalLabel, getEquipmentLabel } from '@/lib/utils'
+import { useGenerateProgram } from '@/hooks/useGenerateProgram'
 import Button from '@/components/ui/Button'
 
 export default function CheckoutPage() {
+  const router = useRouter()
   const [formData, setFormData] = useState<FormData | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState('')
+  const { status: generationStatus, error: generationError, generate } = useGenerateProgram()
+
+  const isGenerating = generationStatus === 'generating'
 
   useEffect(() => {
     const stored = sessionStorage.getItem('programforge_form')
@@ -23,17 +29,23 @@ export default function CheckoutPage() {
   const selectedTier = hasNutrition ? PRICING_TIERS[1] : PRICING_TIERS[0]
 
   const handleStripeCheckout = async () => {
-    setLoading(true)
-    // TODO: Implement Stripe checkout session
-    // const res = await fetch('/api/create-checkout-session', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ formData, tierId: selectedTier.id }),
-    // })
-    // const { url } = await res.json()
-    // window.location.href = url
-    alert('Stripe integration coming soon! This is a placeholder checkout.')
-    setLoading(false)
+    if (!formData) return
+    // TODO: Replace with real Stripe checkout session creation.
+    // The flow will be:
+    //   1. POST /api/create-checkout-session → get Stripe hosted URL
+    //   2. Redirect user to Stripe → user pays
+    //   3. Stripe calls POST /api/webhook on success
+    //   4. Webhook triggers program generation + email delivery
+    //   5. User lands on /success page with download link
+    //
+    // For now: generate the program directly (bypassing payment) so
+    // the end-to-end Claude generation can be tested without Stripe.
+
+    const program = await generate(formData)
+    if (program) {
+      if (email) sessionStorage.setItem('programforge_email', email)
+      router.push('/success')
+    }
   }
 
   if (!formData) {
@@ -97,6 +109,8 @@ export default function CheckoutPage() {
                   <input
                     type="email"
                     placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-transparent text-zinc-200 placeholder-zinc-600 text-sm focus:outline-none"
                   />
                 </div>
@@ -122,15 +136,41 @@ export default function CheckoutPage() {
                   />
                 </div>
 
+                {/* Generation status */}
+                {isGenerating && (
+                  <div className="rounded-xl border border-orange-500/30 bg-orange-500/5 p-4">
+                    <div className="flex items-center gap-3">
+                      <Cpu className="h-5 w-5 text-orange-400 animate-pulse flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold text-orange-300">Generating your program…</p>
+                        <p className="text-xs text-zinc-500 mt-0.5">
+                          Claude is building your personalized plan. This takes 20–40 seconds.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full animate-[shimmer_2s_linear_infinite] w-2/3" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Generation error */}
+                {generationStatus === 'error' && generationError && (
+                  <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
+                    <p className="text-sm font-semibold text-red-400 mb-1">Generation failed</p>
+                    <p className="text-xs text-zinc-500">{generationError}</p>
+                  </div>
+                )}
+
                 <Button
                   variant="primary"
                   size="lg"
                   className="w-full justify-center gap-3"
-                  loading={loading}
+                  loading={isGenerating}
                   onClick={handleStripeCheckout}
                 >
                   <Lock className="h-4 w-4" />
-                  Pay ${selectedTier.price}.00 Securely
+                  {isGenerating ? 'Generating Program…' : `Pay $${selectedTier.price}.00 Securely`}
                 </Button>
 
                 <p className="text-center text-xs text-zinc-600">
