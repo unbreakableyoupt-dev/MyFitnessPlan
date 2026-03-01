@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --background: #09090b;
+  --foreground: #fafafa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #18181b;
+}
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #f97316;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(249, 115, 22, 0.3);
+  color: #fff;
+}
+
+/* Focus ring */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-zinc-950;
+}
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-gradient-to-r from-orange-400 to-amber-300 bg-clip-text text-transparent;
+}
+
+/* Card hover effect */
+.card-hover {
+  @apply transition-all duration-200 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10;
+}
+
+/* Step transition animation */
+.step-enter {
+  animation: slideUp 0.35s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Glow button */
+.btn-glow {
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+}
+.btn-glow:hover {
+  box-shadow: 0 0 30px rgba(249, 115, 22, 0.6);
+}
