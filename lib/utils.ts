@@ -54,6 +54,7 @@ const EQUIPMENT_LABEL_MAP: Record<string, string> = {
   resistance_bands: 'Resistance Bands',
   pull_up_bar: 'Pull Up Bar',
   trx: 'TRX / Suspension',
+  roman_chair: 'Roman Chair',
   full_gym: 'Full Gym',
 }
 

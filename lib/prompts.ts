@@ -100,6 +100,7 @@ const EQUIPMENT_LABELS: Record<string, string> = {
   resistance_bands: 'Resistance bands',
   pull_up_bar: 'Pull-up bar',
   trx: 'TRX / suspension trainer',
+  roman_chair: 'Roman chair / hyperextension bench',
   full_gym: 'Full commercial gym',
 }
 

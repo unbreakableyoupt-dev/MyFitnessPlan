@@ -194,7 +194,7 @@ export default function Step7Summary({ formData, onCheckout, onTestGenerate, isG
       {onTestGenerate && (
         <div className="rounded-xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 p-4">
           <p className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">
-            ⚠ Test Mode — Stripe Bypassed
+            Test Mode — Stripe Bypassed
           </p>
           <button
             type="button"
@@ -208,7 +208,7 @@ export default function Step7Summary({ formData, onCheckout, onTestGenerate, isG
       )}
 
       <p className="text-center text-xs text-zinc-600">
-        🔒 Secure checkout via Stripe · Instant PDF delivery after payment
+        Secure checkout via Stripe · Instant PDF delivery after payment
       </p>
     </div>
   )

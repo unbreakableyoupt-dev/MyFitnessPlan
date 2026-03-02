@@ -139,7 +139,6 @@ export default function Step4Schedule({ formData, onChange }: Step4Props) {
                 >
                   {selected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                 </div>
-                <span className="text-lg flex-shrink-0">{eq.icon}</span>
                 <div className="flex-1 min-w-0">
                   <p className={cn('font-semibold text-sm', selected ? 'text-orange-200' : 'text-zinc-200')}>
                     {eq.label}
@@ -166,7 +165,7 @@ export default function Step4Schedule({ formData, onChange }: Step4Props) {
                   key={id}
                   className="inline-flex items-center gap-1 rounded-full bg-orange-500/15 border border-orange-500/30 px-2.5 py-0.5 text-xs font-medium text-orange-300"
                 >
-                  {opt?.icon} {opt?.label ?? id}
+                  {opt?.label ?? id}
                 </span>
               )
             })}

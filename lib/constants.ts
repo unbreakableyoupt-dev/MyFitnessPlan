@@ -197,6 +197,12 @@ export const EQUIPMENT_OPTIONS = [
     icon: '🎯',
   },
   {
+    id: 'roman_chair',
+    label: 'Roman Chair',
+    description: 'Back extension / hyperextension bench',
+    icon: '',
+  },
+  {
     id: 'full_gym',
     label: 'Full Gym',
     description: 'Access to everything — commercial gym',
