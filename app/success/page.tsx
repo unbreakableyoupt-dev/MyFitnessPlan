@@ -7,10 +7,18 @@ import { Zap, Download, Mail, CheckCircle } from 'lucide-react'
 export default function SuccessPage() {
   const [programText, setProgramText] = useState<string | null>(null)
   const [generatedAt, setGeneratedAt] = useState<string | null>(null)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
 
   useEffect(() => {
     setProgramText(sessionStorage.getItem('programforge_program_text'))
     setGeneratedAt(sessionStorage.getItem('programforge_generated_at'))
+    try {
+      const raw = sessionStorage.getItem('programforge_form')
+      if (raw) {
+        const form = JSON.parse(raw)
+        if (form.email) setUserEmail(form.email)
+      }
+    } catch {}
   }, [])
 
   const formattedDate = generatedAt
@@ -63,15 +71,17 @@ export default function SuccessPage() {
             )}
           </div>
 
-          {/* Email CTA */}
+          {/* Email status */}
           <div className="flex items-center gap-4 rounded-2xl border border-zinc-700 bg-zinc-900 px-6 py-4 mb-8">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-zinc-800">
               <Mail className="h-5 w-5 text-zinc-400" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-zinc-200">Check Your Email</p>
+              <p className="text-sm font-semibold text-zinc-200">PDF Sent to Your Email</p>
               <p className="text-xs text-zinc-500">
-                Your PDF will be emailed once delivery is configured — view it below in the meantime.
+                {userEmail
+                  ? <>A PDF copy was sent to <span className="text-zinc-300 font-medium">{userEmail}</span> — check your inbox.</>
+                  : 'Check your inbox for the PDF copy of your program.'}
               </p>
             </div>
           </div>
@@ -79,7 +89,7 @@ export default function SuccessPage() {
           {/* Program content */}
           {programText ? (
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-              <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+              <div className="px-4 py-3 border-b border-zinc-800">
                 <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Your Program</span>
               </div>
               <div className="p-6">
@@ -95,6 +105,117 @@ export default function SuccessPage() {
               </p>
             </div>
           )}
+
+          {/* ─── RPE / RIR Guide ─────────────────────────────────────── */}
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden mt-6">
+            <div className="px-5 py-4 border-b border-zinc-800">
+              <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">
+                Understanding RPE &amp; RIR
+              </h2>
+              <p className="text-xs text-zinc-500 mt-1">
+                Your program uses these scales to control <em>how hard</em> to push — not just how many reps.
+                Mastering them is the key to long-term progress.
+              </p>
+            </div>
+
+            <div className="p-5 space-y-6">
+
+              {/* RPE table */}
+              <div>
+                <h3 className="text-xs font-bold text-orange-400 uppercase tracking-wide mb-2">
+                  RPE — Rate of Perceived Exertion (scale 1–10)
+                </h3>
+                <p className="text-xs text-zinc-400 mb-3">
+                  RPE measures effort on a 1–10 scale. The key insight: it auto-regulates for your daily readiness.
+                  On a poor sleep night, lifting the same RPE 7 weight as usual is still correct — your body sets the number.
+                </p>
+                <div className="rounded-xl border border-zinc-800 overflow-hidden">
+                  {[
+                    { rpe: '6',   feel: '4+ reps left in the tank — very easy',          when: 'Warm-up sets' },
+                    { rpe: '7',   feel: '3 reps left — working but fully controlled',     when: 'Phase 1 base work' },
+                    { rpe: '8',   feel: '2 reps left — hard, technique stays solid',      when: 'Phase 2 main lifts' },
+                    { rpe: '8.5', feel: '1–2 reps left — very hard',                      when: 'Phase 3 strength' },
+                    { rpe: '9',   feel: '1 rep left — maximum effort for reps',           when: 'PR week attempts' },
+                    { rpe: '10',  feel: 'Nothing left — true muscular failure',           when: '1RM testing only' },
+                  ].map(({ rpe, feel, when }, i) => (
+                    <div
+                      key={rpe}
+                      className={`grid grid-cols-[3rem_1fr_auto] items-center gap-3 px-4 py-2.5 text-xs ${
+                        i % 2 === 0 ? 'bg-zinc-800/40' : ''
+                      }`}
+                    >
+                      <span className="font-bold text-orange-400">RPE {rpe}</span>
+                      <span className="text-zinc-300">{feel}</span>
+                      <span className="text-zinc-600 hidden sm:block text-right">{when}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* RIR table */}
+              <div>
+                <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">
+                  RIR — Reps In Reserve
+                </h3>
+                <p className="text-xs text-zinc-400 mb-3">
+                  RIR is the inverse of RPE expressed directly as reps. &ldquo;RIR 2&rdquo; means you had exactly 2 reps
+                  left before form broke down. Use whichever feels more intuitive — they mean the same thing:
+                </p>
+                <div className="rounded-xl border border-zinc-800 overflow-hidden">
+                  {[
+                    { rir: 'RIR 3', rpe: 'RPE 7',  feel: 'Could have done 3 more clean reps with perfect form' },
+                    { rir: 'RIR 2', rpe: 'RPE 8',  feel: 'Could have done 2 more reps before form would slip' },
+                    { rir: 'RIR 1', rpe: 'RPE 9',  feel: 'One rep away from failure — working at max capacity' },
+                    { rir: 'RIR 0', rpe: 'RPE 10', feel: 'Failure — the rep either didn\'t happen or form broke' },
+                  ].map(({ rir, rpe, feel }, i) => (
+                    <div
+                      key={rir}
+                      className={`grid grid-cols-[4rem_4rem_1fr] items-center gap-3 px-4 py-2.5 text-xs ${
+                        i % 2 === 0 ? 'bg-zinc-800/40' : ''
+                      }`}
+                    >
+                      <span className="font-bold text-amber-400">{rir}</span>
+                      <span className="text-zinc-500">{rpe}</span>
+                      <span className="text-zinc-300">{feel}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* How to use */}
+              <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-4">
+                <p className="text-xs font-bold text-orange-300 uppercase tracking-wide mb-2">
+                  How to Use RPE/RIR in Your Workouts
+                </p>
+                <ol className="space-y-1.5 text-xs text-zinc-400">
+                  <li className="flex items-start gap-2">
+                    <span className="text-orange-400 font-bold flex-shrink-0">1.</span>
+                    <span>Note the target RPE before each set — e.g. &ldquo;4×6 @ RPE 7&rdquo; means you should feel 3 reps left after each set.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-orange-400 font-bold flex-shrink-0">2.</span>
+                    <span>After the set, immediately ask: &ldquo;How many more reps could I have done with good form?&rdquo; — that number is your RIR.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-orange-400 font-bold flex-shrink-0">3.</span>
+                    <span><strong className="text-zinc-300">Too light (RIR 4+):</strong> Increase the weight on your next set or next session.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-orange-400 font-bold flex-shrink-0">4.</span>
+                    <span><strong className="text-zinc-300">Too heavy (RIR 0 when target was RIR 2+):</strong> Reduce load by 5–10% immediately.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-orange-400 font-bold flex-shrink-0">5.</span>
+                    <span><strong className="text-zinc-300">Progression rule:</strong> Hit the top of your rep range at the target RPE for 2 sessions in a row → add the smallest available weight increment.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-orange-400 font-bold flex-shrink-0">6.</span>
+                    <span>On deload weeks, use RPE 5–6 regardless of load. If it feels easy, that&apos;s the point.</span>
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </div>
 
           {/* Getting started */}
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 mt-6 mb-8">
@@ -131,7 +252,7 @@ export default function SuccessPage() {
             <Download className="h-5 w-5 text-white group-hover:scale-110 transition-transform" />
             <span className="font-bold text-white text-sm">Download Program PDF</span>
           </a>
-          <p className="text-xs text-zinc-600 hidden sm:block flex-shrink-0">PDF rendering coming soon</p>
+          <p className="text-xs text-zinc-600 hidden sm:block flex-shrink-0">PDF also sent to your email</p>
         </div>
       </div>
     </div>

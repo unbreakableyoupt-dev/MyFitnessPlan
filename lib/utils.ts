@@ -69,6 +69,7 @@ export function isStepComplete(step: number, formData: FormData): boolean {
   switch (step) {
     case 1:
       return (
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
         formData.sex !== '' &&
         formData.age !== '' &&
         formData.bodyweight !== '' &&

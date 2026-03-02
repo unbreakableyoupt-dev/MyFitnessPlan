@@ -46,6 +46,16 @@ export function useGenerateProgram(): UseGenerateProgramResult {
       setStatus('success')
       sessionStorage.setItem('programforge_program_text', programText)
       sessionStorage.setItem('programforge_generated_at', data.generatedAt ?? new Date().toISOString())
+
+      // Fire-and-forget email with PDF — does not block navigation
+      if (formData.email) {
+        fetch('/api/send-program', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email, programText }),
+        }).catch(() => {}) // failures are silently ignored; SMTP config is optional
+      }
+
       return programText
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Network error — please check your connection.'

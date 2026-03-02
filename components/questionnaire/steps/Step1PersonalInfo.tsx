@@ -19,6 +19,19 @@ export default function Step1PersonalInfo({ formData, onChange }: Step1Props) {
         </p>
       </div>
 
+      {/* Email */}
+      <div>
+        <Input
+          id="email"
+          label="Email Address"
+          type="email"
+          placeholder="you@example.com"
+          value={formData.email}
+          onChange={(e) => onChange({ email: e.target.value })}
+        />
+        <p className="mt-1.5 text-xs text-zinc-500">Your program PDF will be emailed here automatically.</p>
+      </div>
+
       {/* Sex selection */}
       <div>
         <label className="block text-sm font-medium text-zinc-300 mb-3">Sex</label>

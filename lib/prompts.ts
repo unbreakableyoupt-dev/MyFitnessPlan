@@ -39,7 +39,8 @@ Every [N]th week: [2-3 sentences on how to deload]
 
 ## NUTRITION
 (include ONLY if the user requested nutrition; skip this section entirely if not)
-[Daily calorie target, protein/carb/fat grams, key timing notes — 4-6 bullet points]
+For macro-based: daily calories, protein/carb/fat grams, per-meal targets — 4-6 bullet points.
+For hand-portion: structure around exactly 3-4 meals per day (never 5-6). Show portion sizes per meal using palm/hand/thumb/fist guides. Keep it simple and actionable.
 
 ## FAQ
 Q: [relevant question for this person]
@@ -154,11 +155,17 @@ export function buildUserPrompt(formData: FormData): string {
 
   lines.push('')
   if (hasNutrition) {
-    const method =
-      formData.nutritionMethod === 'macro_based'
-        ? 'macro-based (include specific calorie, protein, carb, fat targets)'
-        : 'hand-portion method (use palm/hand/thumb/fist guides, no calorie counting)'
-    lines.push(`Include a nutrition plan using the ${method}.`)
+    if (formData.nutritionMethod === 'macro_based') {
+      lines.push('Include a macro-based nutrition plan: daily calories, protein/carb/fat grams, per-meal breakdown.')
+    } else {
+      lines.push(
+        'Include a hand-portion nutrition plan. ' +
+        'Structure it around exactly 3 to 4 meals per day (not 5 or 6). ' +
+        'Use palm/hand/thumb/fist visual guides for each food group. ' +
+        'Show the portion sizes per meal, distributed across 3-4 meals total. ' +
+        'No calorie counting — keep it simple and practical.'
+      )
+    }
   } else {
     lines.push('No nutrition plan needed — training program only.')
   }
