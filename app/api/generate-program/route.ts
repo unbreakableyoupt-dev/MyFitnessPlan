@@ -7,10 +7,10 @@ import { GeneratedProgram, GenerateProgramResponse, ErrorCode } from '@/lib/prog
 // ─── Vercel Runtime Config ────────────────────────────────────────────────────
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 120 // seconds — requires Vercel Pro for >60s
+export const maxDuration = 60 // Vercel Hobby tier hard limit; upgrade to Pro for 120s+
 
 // ─── Model ───────────────────────────────────────────────────────────────────
-const MODEL = 'claude-sonnet-4-6'
+const MODEL = 'claude-haiku-4-5-20251001' // Fast structured output — completes well under 60s
 const MAX_TOKENS = 8192
 
 // ─── Anthropic Client ─────────────────────────────────────────────────────────
