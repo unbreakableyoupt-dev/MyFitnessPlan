@@ -164,7 +164,7 @@ function validateFormData(data: unknown): { valid: true; formData: FormData } | 
     errors.push({ field: 'minutesPerSession', message: `Must be one of: ${validMinutes.join(', ')}` })
   }
 
-  const validEquipment = ['bodyweight', 'dumbbells', 'barbells', 'machines', 'cables', 'resistance_bands', 'pull_up_bar', 'trx', 'full_gym']
+  const validEquipment = ['bodyweight', 'dumbbells', 'barbells', 'machines', 'cables', 'resistance_bands', 'pull_up_bar', 'trx', 'roman_chair', 'full_gym']
   if (!Array.isArray(d.equipmentAccess) || (d.equipmentAccess as string[]).length === 0) {
     errors.push({ field: 'equipmentAccess', message: 'At least one equipment option must be selected' })
   } else {
