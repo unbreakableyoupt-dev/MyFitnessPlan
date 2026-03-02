@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
-import { createElement } from 'react'
 import { pdf } from '@react-pdf/renderer'
-import { ProgramPDF } from '@/lib/pdf'
+import { buildProgramPDF } from '@/lib/pdf'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -48,7 +47,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Generate PDF
   let pdfBuffer: Buffer
   try {
-    const element = createElement(ProgramPDF, { programText })
+    const element = buildProgramPDF(programText)
     const pdfInstance = pdf(element)
     pdfBuffer = await pdfInstance.toBuffer()
   } catch (err) {

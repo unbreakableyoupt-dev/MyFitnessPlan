@@ -57,7 +57,9 @@ const styles = StyleSheet.create({
   },
 })
 
-export function ProgramPDF({ programText }: { programText: string }) {
+// Plain builder function — not a React component.
+// Returns a <Document> element whose type satisfies react-pdf's pdf() signature.
+export function buildProgramPDF(programText: string) {
   const lines = programText.split('\n')
 
   return (
