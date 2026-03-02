@@ -10,7 +10,10 @@ import { getGoalLabel, getEquipmentLabel } from '@/lib/utils'
 import { useGenerateProgram } from '@/hooks/useGenerateProgram'
 import Button from '@/components/ui/Button'
 
-const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === 'true'
+// Show test bypass in dev mode always, or when TEST_MODE env var is set
+const SHOW_TEST_BUTTON =
+  process.env.NODE_ENV === 'development' ||
+  process.env.NEXT_PUBLIC_TEST_MODE === 'true'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -156,11 +159,14 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Generation error */}
+                {/* Generation error — shown prominently so you can debug */}
                 {generationStatus === 'error' && generationError && (
-                  <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
-                    <p className="text-sm font-semibold text-red-400 mb-1">Generation failed</p>
-                    <p className="text-xs text-zinc-500">{generationError}</p>
+                  <div className="rounded-xl border border-red-500/50 bg-red-950/40 p-4">
+                    <p className="text-sm font-bold text-red-400 mb-2">Generation failed</p>
+                    <p className="text-sm text-red-300 font-mono break-all">{generationError}</p>
+                    <p className="text-xs text-zinc-500 mt-2">
+                      Check the terminal / server logs for the full stack trace.
+                    </p>
                   </div>
                 )}
 
@@ -175,7 +181,7 @@ export default function CheckoutPage() {
                   {isGenerating ? 'Generating Program…' : `Pay $${selectedTier.price}.00 Securely`}
                 </Button>
 
-                {IS_TEST_MODE && (
+                {SHOW_TEST_BUTTON && (
                   <div className="rounded-xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 p-4">
                     <p className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">
                       ⚠ Test Mode — Stripe Bypassed
