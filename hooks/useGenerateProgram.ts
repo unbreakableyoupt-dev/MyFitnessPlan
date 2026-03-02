@@ -35,7 +35,16 @@ export function useGenerateProgram(): UseGenerateProgramResult {
         body: JSON.stringify({ formData }),
       })
 
-      const data: GenerateProgramResponse = await res.json()
+      const text = await res.text()
+      let data: GenerateProgramResponse
+      try {
+        data = JSON.parse(text) as GenerateProgramResponse
+      } catch {
+        // Server returned a non-JSON response (e.g. Vercel timeout/502 HTML page)
+        throw new Error(
+          `Server error (HTTP ${res.status}): ${text.slice(0, 200).replace(/\s+/g, ' ')}`
+        )
+      }
 
       if (!data.success) {
         setError(data.error)
