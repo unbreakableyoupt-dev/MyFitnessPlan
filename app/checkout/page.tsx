@@ -10,6 +10,8 @@ import { getGoalLabel, getEquipmentLabel } from '@/lib/utils'
 import { useGenerateProgram } from '@/hooks/useGenerateProgram'
 import Button from '@/components/ui/Button'
 
+const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === 'true'
+
 export default function CheckoutPage() {
   const router = useRouter()
   const [formData, setFormData] = useState<FormData | null>(null)
@@ -75,7 +77,7 @@ export default function CheckoutPage() {
                 <Zap className="h-3.5 w-3.5 text-white" />
               </div>
               <span className="font-bold text-base text-zinc-100">
-                Program<span className="text-orange-500">Forge</span>
+                My<span className="text-orange-500">Fitness</span>Plan
               </span>
             </Link>
             <div className="flex items-center gap-2 text-xs text-zinc-500">
@@ -172,6 +174,22 @@ export default function CheckoutPage() {
                   <Lock className="h-4 w-4" />
                   {isGenerating ? 'Generating Program…' : `Pay $${selectedTier.price}.00 Securely`}
                 </Button>
+
+                {IS_TEST_MODE && (
+                  <div className="rounded-xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 p-4">
+                    <p className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">
+                      ⚠ Test Mode — Stripe Bypassed
+                    </p>
+                    <button
+                      type="button"
+                      disabled={isGenerating}
+                      onClick={handleStripeCheckout}
+                      className="w-full rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-300 hover:bg-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {isGenerating ? 'Generating…' : 'Generate Test Program (No Payment)'}
+                    </button>
+                  </div>
+                )}
 
                 <p className="text-center text-xs text-zinc-600">
                   Your payment is processed securely by Stripe. We never store card details.

@@ -105,8 +105,8 @@ export default function Pricing() {
         <div className="mt-10 text-center">
           <p className="text-sm text-zinc-500">
             🔒 Secure checkout via Stripe · Instant PDF delivery · Questions?{' '}
-            <a href="mailto:support@programforge.io" className="text-zinc-400 underline hover:text-zinc-200">
-              support@programforge.io
+            <a href="mailto:support@myfitnesplan.app" className="text-zinc-400 underline hover:text-zinc-200">
+              support@myfitnesplan.app
             </a>
           </p>
         </div>

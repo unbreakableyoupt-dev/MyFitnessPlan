@@ -103,10 +103,15 @@ function validateFormData(data: unknown): { valid: true; formData: FormData } | 
     errors.push({ field: 'minutesPerSession', message: `Must be one of: ${validMinutes.join(', ')}` })
   }
 
-  // Equipment
-  const validEquipment = ['full_gym', 'home_gym', 'barbell_rack', 'dumbbells_only', 'bodyweight_only']
-  if (!validEquipment.includes(d.equipmentAccess as string)) {
-    errors.push({ field: 'equipmentAccess', message: `Must be one of: ${validEquipment.join(', ')}` })
+  // Equipment — must be a non-empty array of valid IDs
+  const validEquipment = ['bodyweight', 'dumbbells', 'barbells', 'machines', 'cables', 'resistance_bands', 'pull_up_bar', 'trx', 'full_gym']
+  if (!Array.isArray(d.equipmentAccess) || (d.equipmentAccess as string[]).length === 0) {
+    errors.push({ field: 'equipmentAccess', message: 'At least one equipment option must be selected' })
+  } else {
+    const invalid = (d.equipmentAccess as string[]).filter((e) => !validEquipment.includes(e))
+    if (invalid.length > 0) {
+      errors.push({ field: 'equipmentAccess', message: `Unknown equipment IDs: ${invalid.join(', ')}` })
+    }
   }
 
   // Nutrition add-on: if true, method is required

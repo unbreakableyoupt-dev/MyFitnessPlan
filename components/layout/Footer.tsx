@@ -12,7 +12,7 @@ export default function Footer() {
               <Zap className="h-3.5 w-3.5 text-white" />
             </div>
             <span className="font-bold text-base text-zinc-100">
-              Program<span className="text-orange-500">Forge</span>
+              My<span className="text-orange-500">Fitness</span>Plan
             </span>
           </Link>
 
@@ -24,19 +24,19 @@ export default function Footer() {
             <a href="#" className="hover:text-zinc-300 transition-colors">
               Terms
             </a>
-            <a href="mailto:support@programforge.io" className="hover:text-zinc-300 transition-colors">
+            <a href="mailto:support@myfitnesplan.app" className="hover:text-zinc-300 transition-colors">
               Support
             </a>
           </div>
 
           {/* Copyright */}
           <p className="text-sm text-zinc-600">
-            © {new Date().getFullYear()} ProgramForge. All rights reserved.
+            © {new Date().getFullYear()} MyFitnessPlan. All rights reserved.
           </p>
         </div>
 
         <p className="mt-8 text-center text-xs text-zinc-700">
-          ProgramForge uses AI to generate personalized fitness programs. Always consult a healthcare
+          MyFitnessPlan uses AI to generate personalized fitness programs. Always consult a healthcare
           professional before starting a new exercise regimen.
         </p>
       </div>
