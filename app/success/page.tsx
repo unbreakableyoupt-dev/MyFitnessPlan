@@ -339,21 +339,25 @@ export default function SuccessPage() {
               <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
                 <SectionHeader icon={<RefreshCw className="h-4 w-4" />} label="Deload Protocol" />
                 <p className="text-sm font-bold text-orange-300 mb-2">{program.deload.frequency}</p>
-                <p className="text-sm text-zinc-400 leading-relaxed mb-4">{program.deload.rationale}</p>
+                {program.deload.rationale && (
+                  <p className="text-sm text-zinc-400 leading-relaxed mb-4">{program.deload.rationale}</p>
+                )}
                 <p className="text-sm text-zinc-400 leading-relaxed mb-4">{program.deload.protocol}</p>
                 <div className="rounded-xl bg-zinc-800/50 border border-zinc-700/40 p-4 space-y-3">
                   <div>
                     <p className="text-xs font-bold text-zinc-500 uppercase tracking-wide mb-2">
                       Example Deload Week
                     </p>
-                    <ul className="space-y-1.5">
-                      {program.deload.deloadWeekExample.adjustments.map((adj, i) => (
-                        <li key={i} className="text-sm text-zinc-400 flex items-start gap-2">
-                          <span className="text-zinc-600 flex-shrink-0">·</span>
-                          {adj}
-                        </li>
-                      ))}
-                    </ul>
+                    {program.deload.deloadWeekExample.adjustments && (
+                      <ul className="space-y-1.5">
+                        {program.deload.deloadWeekExample.adjustments.map((adj, i) => (
+                          <li key={i} className="text-sm text-zinc-400 flex items-start gap-2">
+                            <span className="text-zinc-600 flex-shrink-0">·</span>
+                            {adj}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                   <div className="border-t border-zinc-700/60 pt-3">
                     <p className="text-xs text-zinc-500 italic">

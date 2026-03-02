@@ -11,7 +11,7 @@ export const maxDuration = 60 // Vercel Hobby tier hard limit; upgrade to Pro fo
 
 // ─── Model ───────────────────────────────────────────────────────────────────
 const MODEL = 'claude-haiku-4-5-20251001' // Fast structured output — completes well under 60s
-const MAX_TOKENS = 4096 // Keeps response within Haiku's reliable output range; prompt instructs conciseness
+const MAX_TOKENS = 8000 // Haiku ceiling; compact prompt schema keeps output well under this
 
 // ─── Anthropic Client ─────────────────────────────────────────────────────────
 function getAnthropicClient(): Anthropic | null {

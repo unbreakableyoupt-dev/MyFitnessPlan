@@ -282,34 +282,34 @@ TRAINING + NUTRITION ALIGNMENT (override if mismatched):
   - NEVER prescribe a nutrition plan that contradicts the training goal. Flag and correct mismatches.
 
 ═══════════════════════════════════════════════════════════════
-OUTPUT STRUCTURE
+OUTPUT STRUCTURE (compact — token budget is tight)
 ═══════════════════════════════════════════════════════════════
 
-Return ONLY this JSON structure. Every field is required. Null is allowed only where explicitly marked.
+Return ONLY the JSON below. Omitted fields (marked †) must NOT appear in your output.
 
 {
   "overview": {
-    "philosophy": "2–3 sentence coaching philosophy written directly to this person",
-    "approach": "Explain exactly why you chose this split/structure for their specific inputs",
-    "keyPrinciples": ["4–6 non-generic principles guiding this exact program"],
-    "weeklyStructure": "Plain-English description of what each training week looks like",
-    "programDuration": "e.g. '12 weeks across 3 phases of 4 weeks each'"
+    "philosophy": "1–2 sentences direct to this person",
+    "approach": "1–2 sentences — why this split for their inputs",
+    "keyPrinciples": ["principle 1", "principle 2", "principle 3"],
+    "weeklyStructure": "One-line schedule, e.g. Mon/Upper · Tue/Lower · Thu/Upper · Fri/Lower",
+    "programDuration": "12 weeks / 3 phases"
   },
   "program": {
-    "split": "e.g. Upper/Lower, Push/Pull/Legs, Full Body",
+    "split": "Upper/Lower",
     "daysPerWeek": 4,
     "phasedWeeks": [
       {
         "phase": 1,
-        "phaseLabel": "Accumulation (Weeks 1–4)",
-        "focus": "Volume accumulation and movement pattern mastery",
+        "phaseLabel": "Phase 1 — Accumulation (Weeks 1–4)",
+        "focus": "Brief label",
         "days": [
           {
             "dayNumber": 1,
-            "dayName": "Upper A — Horizontal Push/Pull Focus",
-            "focus": "Horizontal Push, Horizontal Pull, Vertical Push, Core",
+            "dayName": "Upper A",
+            "focus": "Horizontal Push/Pull · Core",
             "sessionDuration": 60,
-            "warmup": "Specific warmup protocol for this day (not generic)",
+            "warmup": "One sentence only",
             "exercises": [
               {
                 "order": 1,
@@ -317,45 +317,32 @@ Return ONLY this JSON structure. Every field is required. Null is allowed only w
                 "pattern": "Horizontal Push",
                 "sets": 4,
                 "reps": "4–6",
-                "rpe": "7–8",
-                "rir": "2–4",
+                "rpe": "7",
+                "rir": "3",
                 "rest": "3 min",
-                "notes": "Specific coaching cue, modification, or substitution note"
+                "notes": "≤10 words"
               }
             ],
-            "cooldown": "Specific cooldown — not just 'stretch'"
+            "cooldown": "One sentence only"
           }
         ]
       }
     ]
   },
   "progression": {
-    "method": "Double Progression (Hypertrophy) or Linear (Strength) — be specific",
-    "overview": "2–3 sentence overview of the progression system in plain language",
-    "rules": [
-      "Specific rule 1 for this program",
-      "Specific rule 2",
-      "When to add weight, when to hold, when to deload"
-    ],
-    "rpeExplanation": "Explain RPE 1–10 scale with practical examples matching this trainee's experience level",
-    "rirExplanation": "Explain Reps in Reserve with a concrete example using an exercise from their program",
-    "weeklyGoals": [
-      "Phase 1 (Weeks 1–4): Specific goal",
-      "Phase 2 (Weeks 5–8): Specific goal",
-      "Phase 3 (Weeks 9–12): Specific goal"
-    ]
+    "method": "Double Progression or Linear — be specific",
+    "overview": "1–2 sentences",
+    "rules": ["rule 1", "rule 2", "rule 3"]
+    † DO NOT include rpeExplanation, rirExplanation, or weeklyGoals
   },
   "deload": {
-    "frequency": "Every 4th week (or specify if different)",
-    "rationale": "Why this specific person needs structured deloads — personalized explanation",
-    "protocol": "40% volume reduction, same exercises, RPE 6–7",
+    "frequency": "Every 4th week",
+    "protocol": "50% volume, same exercises, RPE 6",
     "deloadWeekExample": {
-      "adjustments": [
-        "Specific adjustment 1, e.g. 'Bench Press: 3×4 instead of 4×6, RPE 6'",
-        "Specific adjustment 2"
-      ],
-      "mindset": "Coaching message about what deload weeks are and why not to skip them"
+      "mindset": "1–2 sentence coaching message"
+      † DO NOT include adjustments array
     }
+    † DO NOT include rationale
   },
   "nutrition": {
     "included": false,
@@ -369,21 +356,20 @@ Return ONLY this JSON structure. Every field is required. Null is allowed only w
     "supplements": null
   },
   "faq": [
-    {
-      "question": "Specific, relevant question for this person's program",
-      "answer": "Detailed, personalized answer — not generic"
-    }
+    { "question": "...", "answer": "1–2 sentences" }
   ]
 }
 
 IMPORTANT NOTES:
-- Generate 3 phases (Phase 1: Weeks 1–4, Phase 2: Weeks 5–8, Phase 3: Weeks 9–12). Each phase contains one representative training week (all scheduled days).
-- Weeks 4, 8, and 12 are deload weeks — do not include them as separate days but reference them in the deload section.
-- Every phase's exercises must reflect progressive overload vs the prior phase (increased load, volume, or intensity).
+- 3 phases (Weeks 1–4 / 5–8 / 9–12). Each phase = one representative training week.
+- MAXIMUM 5 exercises per day. Warmup and cooldown = one sentence each.
+- progression must NOT contain rpeExplanation, rirExplanation, or weeklyGoals.
+- deload must NOT contain rationale. deloadWeekExample must NOT contain adjustments.
+- Every phase's exercises must reflect progressive overload vs the prior phase.
 - Use ONLY exercises appropriate for the stated equipment access.
-- If nutrition add-on is requested (indicated in user message), populate ALL nutrition fields with real numbers. Set "included": true.
-- Generate 5–7 FAQ items specific to this person's program, not boilerplate.
-- Do NOT copy-paste generic advice. Every sentence should be specific to the individual's inputs.`
+- If nutrition add-on requested, populate ALL nutrition fields with real numbers; set "included": true.
+- Generate exactly 3 FAQ items. Answers: 1–2 sentences.
+- Do NOT copy-paste generic advice. Be specific to this individual's inputs.`
 
 // ─── User Prompt Builder ──────────────────────────────────────────────────────
 
