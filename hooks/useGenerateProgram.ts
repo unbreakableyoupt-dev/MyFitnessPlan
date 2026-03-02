@@ -35,31 +35,60 @@ export function useGenerateProgram(): UseGenerateProgramResult {
         body: JSON.stringify({ formData }),
       })
 
+      const contentType = res.headers.get('content-type') ?? ''
       const text = await res.text()
-      let data: GenerateProgramResponse
-      try {
-        data = JSON.parse(text) as GenerateProgramResponse
-      } catch {
-        // Server returned a non-JSON response (e.g. Vercel timeout/502 HTML page)
+
+      // ── JSON path: validation errors, mock response, or pre-stream auth failure ──
+      if (contentType.includes('application/json') || !res.ok) {
+        let data: GenerateProgramResponse
+        try {
+          data = JSON.parse(text) as GenerateProgramResponse
+        } catch {
+          throw new Error(
+            `Server error (HTTP ${res.status}): ${text.slice(0, 200).replace(/\s+/g, ' ')}`
+          )
+        }
+        if (!data.success) throw new Error(data.error ?? 'Unknown server error')
+        setProgram(data.program)
+        setStatus('success')
+        sessionStorage.setItem('programforge_program', JSON.stringify(data.program))
+        sessionStorage.setItem('programforge_generated_at', data.generatedAt)
+        return data.program
+      }
+
+      // ── Streaming path: text/plain Claude output ──────────────────────────────
+      // Check for in-band error signal written at end of stream
+      if (text.includes('\n__STREAM_ERROR__:')) {
+        throw new Error(text.split('\n__STREAM_ERROR__:').pop()!.trim())
+      }
+
+      // Extract the JSON object from the raw Claude text
+      const firstBrace = text.indexOf('{')
+      const lastBrace = text.lastIndexOf('}')
+      if (firstBrace === -1 || lastBrace <= firstBrace) {
         throw new Error(
-          `Server error (HTTP ${res.status}): ${text.slice(0, 200).replace(/\s+/g, ' ')}`
+          `Unexpected stream response: ${text.slice(0, 200).replace(/\s+/g, ' ')}`
         )
       }
 
-      if (!data.success) {
-        setError(data.error)
-        setStatus('error')
-        return null
+      let program: GeneratedProgram
+      try {
+        program = JSON.parse(text.slice(firstBrace, lastBrace + 1)) as GeneratedProgram
+      } catch (err) {
+        throw new Error(
+          `JSON parse failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+        )
       }
 
-      setProgram(data.program)
+      if (!program.overview || !program.program || !Array.isArray(program.program.phasedWeeks)) {
+        throw new Error('Invalid program structure received from server')
+      }
+
+      setProgram(program)
       setStatus('success')
-
-      // Persist to sessionStorage so the success/download page can access it
-      sessionStorage.setItem('programforge_program', JSON.stringify(data.program))
-      sessionStorage.setItem('programforge_generated_at', data.generatedAt)
-
-      return data.program
+      sessionStorage.setItem('programforge_program', JSON.stringify(program))
+      sessionStorage.setItem('programforge_generated_at', new Date().toISOString())
+      return program
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Network error — please check your connection'

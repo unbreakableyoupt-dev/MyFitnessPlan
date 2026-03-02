@@ -683,7 +683,7 @@ function errorResponse(
 
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
-export async function POST(req: NextRequest): Promise<NextResponse<GenerateProgramResponse>> {
+export async function POST(req: NextRequest): Promise<Response> {
   const requestId = crypto.randomUUID().slice(0, 8)
   const startTime = Date.now()
   console.log(`[generate-program][${requestId}] Request received`)
@@ -739,52 +739,52 @@ export async function POST(req: NextRequest): Promise<NextResponse<GenerateProgr
     })
   }
 
-  // ── 5. Call Claude with retry logic ────────────────────────────────────────
-  let rawResponse: string
-  try {
-    rawResponse = await callClaudeWithRetry(client, userPrompt)
-  } catch (error) {
-    const code = getErrorCode(error)
-    const message = getUserFacingMessage(error)
-    const httpStatus =
-      code === 'AUTH_ERROR' ? 500
-      : code === 'RATE_LIMITED' ? 429
-      : code === 'TIMEOUT' ? 504
-      : 500
+  // ── 5. Stream Claude response ───────────────────────────────────────────────
+  const encoder = new TextEncoder()
+  const readableStream = new ReadableStream({
+    async start(controller) {
+      const tokenUsage = { input: 0, output: 0 }
+      try {
+        const messageStream = client.messages.stream({
+          model: MODEL,
+          max_tokens: MAX_TOKENS,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: userPrompt }],
+        })
 
-    console.error(`[generate-program][${requestId}] Claude call failed:`, error)
-    return errorResponse(message, code, httpStatus)
-  }
+        for await (const event of messageStream) {
+          if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+            controller.enqueue(encoder.encode(event.delta.text))
+          } else if (event.type === 'message_start') {
+            tokenUsage.input = event.message.usage.input_tokens
+          } else if (event.type === 'message_delta') {
+            tokenUsage.output = event.usage.output_tokens
+          }
+        }
 
-  // ── 6. Parse & validate JSON response ─────────────────────────────────────
-  let program: GeneratedProgram
-  try {
-    program = parseAndValidateProgram(rawResponse)
-  } catch (error) {
-    const parseMsg = error instanceof Error ? error.message : 'Unknown parse error'
-    console.error(`[generate-program][${requestId}] Parse failed: ${parseMsg}`)
-    // Log the raw response for debugging (truncated)
-    console.error(`[generate-program][${requestId}] Raw response (first 500 chars): ${rawResponse.slice(0, 500)}`)
-    return errorResponse(getUserFacingMessage(error), 'PARSE_ERROR', 500)
-  }
+        const elapsed = Date.now() - startTime
+        console.log(
+          `[generate-program][${requestId}] Stream complete in ${elapsed}ms — ` +
+          `in: ${tokenUsage.input} tokens, out: ${tokenUsage.output} tokens`
+        )
+      } catch (error) {
+        const msg = getUserFacingMessage(error)
+        console.error(`[generate-program][${requestId}] Stream error:`, error)
+        // Signal error in-band — status code is already 200 so we embed it in the stream
+        controller.enqueue(encoder.encode(`\n__STREAM_ERROR__:${msg}`))
+      } finally {
+        controller.close()
+      }
+    },
+  })
 
-  // ── 7. Return success ──────────────────────────────────────────────────────
-  const elapsed = Date.now() - startTime
-  console.log(`[generate-program][${requestId}] Success in ${elapsed}ms`)
-
-  const successBody: GenerateProgramResponse = {
-    success: true,
-    program,
-    generatedAt: new Date().toISOString(),
-    modelUsed: MODEL,
-  }
-
-  return NextResponse.json(successBody, {
+  return new Response(readableStream, {
     status: 200,
     headers: {
-      'Cache-Control': 'no-store', // Programs are unique — never cache
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-store, no-cache',
+      'X-Accel-Buffering': 'no', // Disable nginx buffering on Vercel's edge
       'X-Request-Id': requestId,
-      'X-Generation-Time': `${elapsed}ms`,
     },
   })
 }
