@@ -534,7 +534,16 @@ export function buildUserPrompt(formData: FormData): string {
   lines.push(
     `Each phase's exercises should reflect progressive overload relative to the prior phase.`
   )
-  lines.push('Generate 5–7 FAQ items that are specific and relevant to this person.')
+  lines.push('Generate exactly 3 FAQ items that are specific and relevant to this person.')
+  lines.push(
+    'CONCISENESS RULES (strictly enforced — you have a 4000-token output budget):\n' +
+    '  • exercise "notes" field: maximum 12 words\n' +
+    '  • warmup / cooldown fields: maximum 15 words\n' +
+    '  • overview strings: maximum 2 sentences each\n' +
+    '  • progression.rpeExplanation / rirExplanation: maximum 2 sentences each\n' +
+    '  • All other string values: as brief as accurate\n' +
+    '  • You MUST emit a fully closed, valid JSON object — never leave brackets open'
+  )
   lines.push(
     'Respond with ONLY the JSON object. No explanatory text, no markdown, no code fences.'
   )

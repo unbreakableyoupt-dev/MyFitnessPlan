@@ -71,12 +71,26 @@ export function useGenerateProgram(): UseGenerateProgramResult {
         )
       }
 
+      const jsonStr = text.slice(firstBrace, lastBrace + 1)
+
+      // Detect truncation before attempting parse — a truncated stream won't
+      // end with '}' or will have mismatched braces
+      const isTruncated =
+        !text.trimEnd().endsWith('}') ||
+        (jsonStr.split('{').length - 1) !== (jsonStr.split('}').length - 1)
+
       let program: GeneratedProgram
       try {
-        program = JSON.parse(text.slice(firstBrace, lastBrace + 1)) as GeneratedProgram
-      } catch (err) {
+        program = JSON.parse(jsonStr) as GeneratedProgram
+      } catch {
+        if (isTruncated) {
+          throw new Error(
+            'The response was cut off before completing. Please try again — ' +
+            'this occasionally happens when generating complex programs.'
+          )
+        }
         throw new Error(
-          `JSON parse failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+          `Could not read the generated program. Please try again.`
         )
       }
 
