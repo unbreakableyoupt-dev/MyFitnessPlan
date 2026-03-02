@@ -160,10 +160,21 @@ export default function Step7Summary({ formData, onCheckout, onTestGenerate, isG
       )}
 
       {/* Generation error */}
-      {generateError && (
-        <div className="rounded-xl border border-red-500/50 bg-red-950/40 p-4">
-          <p className="text-sm font-bold text-red-400 mb-1">Generation failed</p>
-          <p className="text-sm text-red-300 font-mono break-all">{generateError}</p>
+      {generateError && !isGenerating && (
+        <div className="rounded-xl border border-red-500/50 bg-red-950/40 p-4 space-y-3">
+          <div>
+            <p className="text-sm font-bold text-red-400 mb-1">Generation failed</p>
+            <p className="text-sm text-red-300 break-words">{generateError}</p>
+          </div>
+          {onTestGenerate && (
+            <button
+              type="button"
+              onClick={onTestGenerate}
+              className="w-full rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-300 hover:bg-red-500/20 transition-colors"
+            >
+              Try Again
+            </button>
+          )}
         </div>
       )}
 

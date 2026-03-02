@@ -53,8 +53,8 @@ export default function QuestionnaireForm() {
 
   const handleTestGenerate = async () => {
     sessionStorage.setItem('programforge_form', JSON.stringify(formData))
-    const program = await generate(formData)
-    if (program) router.push('/success')
+    const text = await generate(formData)
+    if (text) router.push('/success')
   }
 
   const progress = ((currentStep - 1) / (TOTAL_STEPS - 1)) * 100
