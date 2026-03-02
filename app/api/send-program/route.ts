@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
-import { pdf } from '@react-pdf/renderer'
+import { renderToBuffer } from '@react-pdf/renderer'
 import { buildProgramPDF } from '@/lib/pdf'
 
 export const runtime = 'nodejs'
@@ -48,8 +48,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   let pdfBuffer: Buffer
   try {
     const element = buildProgramPDF(programText)
-    const pdfInstance = pdf(element)
-    pdfBuffer = await pdfInstance.toBuffer()
+    pdfBuffer = await renderToBuffer(element)
   } catch (err) {
     console.error('[send-program] PDF generation failed:', err)
     return NextResponse.json({ success: false, error: 'PDF generation failed' }, { status: 500 })
