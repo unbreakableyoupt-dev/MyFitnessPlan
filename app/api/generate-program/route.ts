@@ -15,8 +15,16 @@ const MAX_TOKENS = 4000
 // ─── Anthropic Client ─────────────────────────────────────────────────────────
 function getAnthropicClient(): Anthropic | null {
   const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) return null
-  return new Anthropic({ apiKey })
+  if (!apiKey || apiKey.trim() === '') {
+    console.warn('[generate-program] ANTHROPIC_API_KEY is not set or is empty')
+    return null
+  }
+  const trimmed = apiKey.trim()
+  console.log(
+    `[generate-program] ANTHROPIC_API_KEY found — length: ${trimmed.length}, ` +
+    `prefix: ${trimmed.slice(0, 7)}..., suffix: ...${trimmed.slice(-4)}`
+  )
+  return new Anthropic({ apiKey: trimmed })
 }
 
 // ─── Mock (no API key configured) ────────────────────────────────────────────
@@ -180,59 +188,110 @@ function validateFormData(data: unknown): { valid: true; formData: FormData } | 
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const requestId = crypto.randomUUID().slice(0, 8)
+  console.log(`[generate-program][${requestId}] POST received`)
 
-  // 1. Parse body
-  let rawBody: unknown
+  // ── OUTER guard: every possible throw ends up as valid JSON ──────────────────
   try {
-    rawBody = await req.json()
-  } catch {
-    return NextResponse.json({ success: false, error: 'Invalid JSON in request body' }, { status: 400 })
-  }
+    // 1. Parse body
+    let rawBody: unknown
+    try {
+      rawBody = await req.json()
+    } catch (parseErr) {
+      console.error(`[generate-program][${requestId}] Body parse error:`, parseErr)
+      return NextResponse.json({ success: false, error: 'Invalid JSON in request body' }, { status: 400 })
+    }
 
-  if (!rawBody || typeof rawBody !== 'object' || !('formData' in rawBody)) {
-    return NextResponse.json({ success: false, error: 'Request body must contain a "formData" key' }, { status: 400 })
-  }
+    if (!rawBody || typeof rawBody !== 'object' || !('formData' in rawBody)) {
+      return NextResponse.json({ success: false, error: 'Request body must contain a "formData" key' }, { status: 400 })
+    }
 
-  // 2. Validate
-  const validation = validateFormData((rawBody as Record<string, unknown>).formData)
-  if (!validation.valid) {
-    const msg = validation.errors.map((e) => `${e.field}: ${e.message}`).join('; ')
-    return NextResponse.json({ success: false, error: `Validation failed — ${msg}` }, { status: 400 })
-  }
+    // 2. Validate
+    const validation = validateFormData((rawBody as Record<string, unknown>).formData)
+    if (!validation.valid) {
+      const msg = validation.errors.map((e) => `${e.field}: ${e.message}`).join('; ')
+      console.warn(`[generate-program][${requestId}] Validation failed: ${msg}`)
+      return NextResponse.json({ success: false, error: `Validation failed — ${msg}` }, { status: 400 })
+    }
 
-  const { formData } = validation
+    const { formData } = validation
+    console.log(
+      `[generate-program][${requestId}] Validated — ` +
+      `goal: ${formData.primaryGoal}, level: ${formData.experienceLevel}, ` +
+      `days: ${formData.daysPerWeek}, email: ${formData.email ? '✓' : '(none)'}`
+    )
 
-  // 3. Build prompt
-  const userPrompt = buildUserPrompt(formData)
-  console.log(`[generate-program][${requestId}] Goal: ${formData.primaryGoal}, Level: ${formData.experienceLevel}, Days: ${formData.daysPerWeek}`)
+    // 3. Build prompt
+    let userPrompt: string
+    try {
+      userPrompt = buildUserPrompt(formData)
+      console.log(`[generate-program][${requestId}] Prompt built — ${userPrompt.length} chars`)
+    } catch (promptErr) {
+      console.error(`[generate-program][${requestId}] buildUserPrompt threw:`, promptErr)
+      return NextResponse.json({ success: false, error: 'Failed to build prompt — please try again.' }, { status: 500 })
+    }
 
-  // 4. Return mock if no API key
-  const client = getAnthropicClient()
-  if (!client) {
-    console.warn(`[generate-program][${requestId}] No API key — returning mock`)
-    return NextResponse.json({
-      success: true,
-      text: MOCK_TEXT,
-      generatedAt: new Date().toISOString(),
-      modelUsed: 'mock',
-    })
-  }
+    // 4. Return mock if no API key
+    const client = getAnthropicClient()
+    if (!client) {
+      console.warn(`[generate-program][${requestId}] No API key — returning mock program`)
+      return NextResponse.json({
+        success: true,
+        text: MOCK_TEXT,
+        generatedAt: new Date().toISOString(),
+        modelUsed: 'mock',
+      })
+    }
 
-  // 5. Call Claude
-  try {
-    const message = await client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userPrompt }],
-    })
+    // 5. Call Claude
+    console.log(`[generate-program][${requestId}] Calling Anthropic — model: ${MODEL}, max_tokens: ${MAX_TOKENS}`)
+    let message: Anthropic.Message
+    try {
+      message = await client.messages.create({
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userPrompt }],
+      })
+    } catch (apiErr) {
+      // Log the raw error so we can see exactly what Anthropic returned
+      console.error(`[generate-program][${requestId}] Anthropic API error:`, apiErr)
+      console.error(`[generate-program][${requestId}] Error type:`, apiErr?.constructor?.name)
+      console.error(
+        `[generate-program][${requestId}] Error details:`,
+        JSON.stringify(apiErr, Object.getOwnPropertyNames(apiErr ?? {}))
+      )
+
+      let msg = 'Failed to generate program — please try again.'
+      if (apiErr instanceof Anthropic.AuthenticationError || apiErr instanceof Anthropic.PermissionDeniedError) {
+        msg = `API key rejected by Anthropic (${apiErr instanceof Anthropic.AuthenticationError ? 'AuthenticationError' : 'PermissionDenied'}) — check that ANTHROPIC_API_KEY is correct and active.`
+      } else if (apiErr instanceof Anthropic.RateLimitError) {
+        msg = 'Rate limited by Anthropic — please wait a moment and try again.'
+      } else if (apiErr instanceof Anthropic.APIConnectionTimeoutError) {
+        msg = 'Anthropic request timed out — please try again.'
+      } else if (apiErr instanceof Anthropic.APIConnectionError) {
+        msg = 'Could not connect to Anthropic — check network and try again.'
+      } else if (apiErr instanceof Anthropic.BadRequestError) {
+        msg = `Bad request to Anthropic: ${(apiErr as Error).message}`
+      } else if (apiErr instanceof Error) {
+        msg = `Anthropic error: ${apiErr.message}`
+      }
+      return NextResponse.json({ success: false, error: msg }, { status: 502 })
+    }
+
+    // 6. Extract text
+    console.log(
+      `[generate-program][${requestId}] Anthropic responded — ` +
+      `stop_reason: ${message.stop_reason}, ` +
+      `in: ${message.usage.input_tokens} tokens, out: ${message.usage.output_tokens} tokens`
+    )
 
     const content = message.content[0]
     if (!content || content.type !== 'text') {
-      return NextResponse.json({ success: false, error: 'Unexpected response from AI — please try again.' }, { status: 502 })
+      console.error(`[generate-program][${requestId}] Unexpected content type:`, message.content)
+      return NextResponse.json({ success: false, error: 'Unexpected response format from Anthropic.' }, { status: 502 })
     }
 
-    console.log(`[generate-program][${requestId}] OK — in: ${message.usage.input_tokens}, out: ${message.usage.output_tokens}`)
+    console.log(`[generate-program][${requestId}] Response preview: ${content.text.slice(0, 120).replace(/\n/g, ' ')}`)
 
     return NextResponse.json({
       success: true,
@@ -240,17 +299,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       generatedAt: new Date().toISOString(),
       modelUsed: MODEL,
     })
-  } catch (error) {
-    let msg = 'Failed to generate program — please try again.'
-    if (error instanceof Anthropic.AuthenticationError || error instanceof Anthropic.PermissionDeniedError) {
-      msg = 'API key error — please contact support.'
-    } else if (error instanceof Anthropic.RateLimitError) {
-      msg = 'Too many requests — please wait a moment and try again.'
-    } else if (error instanceof Anthropic.APIConnectionTimeoutError || error instanceof Anthropic.APIConnectionError) {
-      msg = 'Request timed out — please try again.'
-    }
-    console.error(`[generate-program][${requestId}] Error:`, error)
-    return NextResponse.json({ success: false, error: msg }, { status: 502 })
+
+  } catch (outerErr) {
+    // Catch-all: something completely unexpected threw — still return JSON
+    console.error(`[generate-program][${requestId}] UNHANDLED exception:`, outerErr)
+    const msg = outerErr instanceof Error ? outerErr.message : String(outerErr)
+    return NextResponse.json(
+      { success: false, error: `Unexpected server error: ${msg}` },
+      { status: 500 }
+    )
   }
 }
 
