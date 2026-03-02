@@ -10,8 +10,6 @@ import { getGoalLabel, getEquipmentLabel } from '@/lib/utils'
 import { useGenerateProgram } from '@/hooks/useGenerateProgram'
 import Button from '@/components/ui/Button'
 
-const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === 'true'
-
 export default function CheckoutPage() {
   const router = useRouter()
   const [formData, setFormData] = useState<FormData | null>(null)
@@ -156,11 +154,14 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Generation error */}
+                {/* Generation error — shown prominently so you can debug */}
                 {generationStatus === 'error' && generationError && (
-                  <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
-                    <p className="text-sm font-semibold text-red-400 mb-1">Generation failed</p>
-                    <p className="text-xs text-zinc-500">{generationError}</p>
+                  <div className="rounded-xl border border-red-500/50 bg-red-950/40 p-4">
+                    <p className="text-sm font-bold text-red-400 mb-2">Generation failed</p>
+                    <p className="text-sm text-red-300 font-mono break-all">{generationError}</p>
+                    <p className="text-xs text-zinc-500 mt-2">
+                      Check the terminal / server logs for the full stack trace.
+                    </p>
                   </div>
                 )}
 
@@ -175,21 +176,19 @@ export default function CheckoutPage() {
                   {isGenerating ? 'Generating Program…' : `Pay $${selectedTier.price}.00 Securely`}
                 </Button>
 
-                {IS_TEST_MODE && (
-                  <div className="rounded-xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 p-4">
-                    <p className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">
-                      ⚠ Test Mode — Stripe Bypassed
-                    </p>
-                    <button
-                      type="button"
-                      disabled={isGenerating}
-                      onClick={handleStripeCheckout}
-                      className="w-full rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-300 hover:bg-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {isGenerating ? 'Generating…' : 'Generate Test Program (No Payment)'}
-                    </button>
-                  </div>
-                )}
+                <div className="rounded-xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 p-4">
+                  <p className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">
+                    ⚠ Test Mode — Stripe Bypassed
+                  </p>
+                  <button
+                    type="button"
+                    disabled={isGenerating}
+                    onClick={handleStripeCheckout}
+                    className="w-full rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-300 hover:bg-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isGenerating ? 'Generating…' : 'Generate Test Program (No Payment)'}
+                  </button>
+                </div>
 
                 <p className="text-center text-xs text-zinc-600">
                   Your payment is processed securely by Stripe. We never store card details.

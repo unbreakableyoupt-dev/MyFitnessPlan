@@ -1,8 +1,5 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
-import { ChevronDown, ChevronRight } from 'lucide-react'
 import { FormData } from '@/lib/types'
 import { MALE_BF_TIERS, FEMALE_BF_TIERS, BFTier } from '@/lib/constants'
 import { cn } from '@/lib/utils'
@@ -86,8 +83,6 @@ function BFCard({
 export default function Step2BodyComp({ formData, onChange }: Step2Props) {
   const tiers = formData.sex === 'female' ? FEMALE_BF_TIERS : MALE_BF_TIERS
   const sexLabel = formData.sex === 'female' ? 'Female' : 'Male'
-  const [chartOpen, setChartOpen] = useState(false)
-
   return (
     <div className="step-enter space-y-6">
       <div>
@@ -96,32 +91,6 @@ export default function Step2BodyComp({ formData, onChange }: Step2Props) {
           Pick the range that best describes your current physique. This doesn&apos;t have to be
           exact — an honest estimate is all we need.
         </p>
-      </div>
-
-      {/* Visual reference chart */}
-      <div className="rounded-xl border border-zinc-700 overflow-hidden">
-        <button
-          type="button"
-          className="w-full flex items-center justify-between px-4 py-3 bg-zinc-800/60 hover:bg-zinc-800 transition-colors text-left"
-          onClick={() => setChartOpen((v) => !v)}
-        >
-          <span className="text-sm font-semibold text-zinc-200">Visual Reference Chart</span>
-          {chartOpen
-            ? <ChevronDown className="h-4 w-4 text-zinc-400 flex-shrink-0" />
-            : <ChevronRight className="h-4 w-4 text-zinc-400 flex-shrink-0" />}
-        </button>
-        {chartOpen && (
-          <div className="bg-zinc-900 p-3">
-            <Image
-              src="/bodyfat-chart.png"
-              alt="Body fat percentage visual reference chart"
-              width={800}
-              height={500}
-              className="w-full h-auto rounded-lg"
-              priority
-            />
-          </div>
-        )}
       </div>
 
       {/* Sex indicator */}
