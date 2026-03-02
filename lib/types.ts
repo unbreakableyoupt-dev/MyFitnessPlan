@@ -9,13 +9,17 @@ export type PrimaryGoal =
   | 'sport_specific'
   | ''
 export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced' | 'elite' | ''
-export type EquipmentAccess =
+// Multi-select equipment IDs
+export type EquipmentId =
+  | 'bodyweight'
+  | 'dumbbells'
+  | 'barbells'
+  | 'machines'
+  | 'cables'
+  | 'resistance_bands'
+  | 'pull_up_bar'
+  | 'trx'
   | 'full_gym'
-  | 'home_gym'
-  | 'barbell_rack'
-  | 'dumbbells_only'
-  | 'bodyweight_only'
-  | ''
 export type MinutesPerSession = 10 | 20 | 30 | 45 | 60 | 90 | ''
 export type NutritionMethod = 'macro_based' | 'hand_portion' | ''
 
@@ -40,7 +44,7 @@ export interface FormData {
   // Step 4: Schedule & Equipment
   daysPerWeek: number | ''
   minutesPerSession: MinutesPerSession
-  equipmentAccess: EquipmentAccess
+  equipmentAccess: EquipmentId[] // multi-select — at least one required
 
   // Step 5: Details
   sport: string
@@ -65,7 +69,7 @@ export const INITIAL_FORM_DATA: FormData = {
   experienceLevel: '',
   daysPerWeek: '',
   minutesPerSession: '',
-  equipmentAccess: '',
+  equipmentAccess: [],
   sport: '',
   injuries: '',
   nutritionAddOn: null,

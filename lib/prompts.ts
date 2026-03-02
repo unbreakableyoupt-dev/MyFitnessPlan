@@ -415,16 +415,15 @@ const EXPERIENCE_LABELS: Record<string, string> = {
 }
 
 const EQUIPMENT_LABELS: Record<string, string> = {
-  full_gym:
-    'Full commercial gym (barbells, dumbbells, cable machines, leg press, all machines)',
-  home_gym:
-    'Home gym (squat rack, barbell, full dumbbell set, bench — no cables or machines)',
-  barbell_rack:
-    'Barbell + rack only (barbell, plates, squat rack — no dumbbells, no machines)',
-  dumbbells_only:
-    'Dumbbells only (adjustable or fixed set, bench optional — no barbell, no machines)',
-  bodyweight_only:
-    'Bodyweight only (no equipment — pull-up bar may or may not be available)',
+  bodyweight: 'Bodyweight (no equipment)',
+  dumbbells: 'Dumbbells (adjustable or fixed set)',
+  barbells: 'Barbells with plates (squat rack available)',
+  machines: 'Weight machines (leg press, chest press, lat pulldown, etc.)',
+  cables: 'Cable machines / functional trainer',
+  resistance_bands: 'Resistance bands (loop and/or tube bands)',
+  pull_up_bar: 'Pull-up bar',
+  trx: 'TRX / Suspension trainer',
+  full_gym: 'Full commercial gym (all equipment)',
 }
 
 function formatHeightForPrompt(formData: FormData): string {
@@ -446,7 +445,9 @@ export function buildUserPrompt(formData: FormData): string {
   const heightStr = formatHeightForPrompt(formData)
   const goalLabel = GOAL_LABELS[formData.primaryGoal] ?? formData.primaryGoal
   const experienceLabel = EXPERIENCE_LABELS[formData.experienceLevel] ?? formData.experienceLevel
-  const equipmentLabel = EQUIPMENT_LABELS[formData.equipmentAccess] ?? formData.equipmentAccess
+  const equipmentLabel = Array.isArray(formData.equipmentAccess)
+    ? formData.equipmentAccess.map((e) => EQUIPMENT_LABELS[e] ?? e).join(', ')
+    : (EQUIPMENT_LABELS[formData.equipmentAccess as string] ?? formData.equipmentAccess)
   const hasNutrition = formData.nutritionAddOn === true
 
   const lines: string[] = []

@@ -4,7 +4,7 @@ import { Zap } from 'lucide-react'
 import QuestionnaireForm from '@/components/questionnaire/QuestionnaireForm'
 
 export const metadata: Metadata = {
-  title: 'Build Your Program — ProgramForge',
+  title: 'Build Your Program — MyFitnessPlan',
   description: 'Answer a few questions about your goals and training, and get your personalized program.',
 }
 
@@ -20,7 +20,7 @@ export default function QuestionnairePage() {
                 <Zap className="h-3.5 w-3.5 text-white" />
               </div>
               <span className="font-bold text-base text-zinc-100">
-                Program<span className="text-orange-500">Forge</span>
+                My<span className="text-orange-500">Fitness</span>Plan
               </span>
             </Link>
             <div className="flex items-center gap-2 text-xs text-zinc-600">

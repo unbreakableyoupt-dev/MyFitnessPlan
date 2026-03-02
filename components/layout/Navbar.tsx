@@ -12,7 +12,7 @@ export default function Navbar() {
               <Zap className="h-4 w-4 text-white" />
             </div>
             <span className="font-bold text-lg tracking-tight text-zinc-100">
-              Program<span className="text-orange-500">Forge</span>
+              My<span className="text-orange-500">Fitness</span>Plan
             </span>
           </Link>
 

@@ -43,7 +43,7 @@ const faqs = [
   {
     question: 'What if I\'m not satisfied?',
     answer:
-      'Reach out to us at support@programforge.io within 7 days of purchase if you\'re not happy with your program. We\'ll work to make it right.',
+      'Reach out to us at support@myfitnesplan.app within 7 days of purchase if you\'re not happy with your program. We\'ll work to make it right.',
   },
 ]
 

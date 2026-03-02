@@ -45,15 +45,24 @@ export function getExperienceLabel(level: string): string {
   return map[level] ?? level
 }
 
-export function getEquipmentLabel(equipment: string): string {
-  const map: Record<string, string> = {
-    full_gym: 'Full Gym',
-    home_gym: 'Home Gym',
-    barbell_rack: 'Barbell + Rack Only',
-    dumbbells_only: 'Dumbbells Only',
-    bodyweight_only: 'Bodyweight Only',
+const EQUIPMENT_LABEL_MAP: Record<string, string> = {
+  bodyweight: 'Bodyweight',
+  dumbbells: 'Dumbbells',
+  barbells: 'Barbells',
+  machines: 'Machines',
+  cables: 'Cables',
+  resistance_bands: 'Resistance Bands',
+  pull_up_bar: 'Pull Up Bar',
+  trx: 'TRX / Suspension',
+  full_gym: 'Full Gym',
+}
+
+export function getEquipmentLabel(equipment: string | string[]): string {
+  if (Array.isArray(equipment)) {
+    if (equipment.length === 0) return 'None selected'
+    return equipment.map((e) => EQUIPMENT_LABEL_MAP[e] ?? e).join(', ')
   }
-  return map[equipment] ?? equipment
+  return EQUIPMENT_LABEL_MAP[equipment] ?? equipment
 }
 
 export function isStepComplete(step: number, formData: FormData): boolean {
@@ -75,7 +84,7 @@ export function isStepComplete(step: number, formData: FormData): boolean {
       return (
         formData.daysPerWeek !== '' &&
         formData.minutesPerSession !== '' &&
-        formData.equipmentAccess !== ''
+        formData.equipmentAccess.length > 0
       )
     case 5:
       return true // optional fields
