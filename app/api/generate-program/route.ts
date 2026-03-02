@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 120 // seconds — requires Vercel Pro for >60s
 
 // ─── Model ───────────────────────────────────────────────────────────────────
-const MODEL = 'claude-sonnet-4-5-20250929'
+const MODEL = 'claude-sonnet-4-6'
 const MAX_TOKENS = 8192
 
 // ─── Anthropic Client ─────────────────────────────────────────────────────────
@@ -589,18 +589,19 @@ function getErrorCode(error: unknown): ErrorCode {
 
 function getUserFacingMessage(error: unknown): string {
   if (error instanceof Anthropic.AuthenticationError || error instanceof Anthropic.PermissionDeniedError) {
-    return 'Service configuration error. Please try again later.'
+    return `Auth error — check ANTHROPIC_API_KEY is valid. Detail: ${error.message}`
   }
   if (error instanceof Anthropic.RateLimitError) {
-    return 'Our AI service is under high demand. Please try again in a moment.'
+    return 'Rate limited — please try again in a moment.'
   }
   if (error instanceof Anthropic.APIConnectionTimeoutError || error instanceof Anthropic.APIConnectionError) {
-    return 'The request timed out. Your program may be complex — please try again.'
+    return 'Request timed out — please try again.'
   }
   if (error instanceof Error && error.message.includes('JSON parse failed')) {
-    return 'Program generation completed but formatting failed. Please try again.'
+    return `Parse error — ${error.message}`
   }
-  return 'Program generation failed. Please try again.'
+  // Expose the raw error for debugging
+  return `Generation failed: ${error instanceof Error ? error.message : String(error)}`
 }
 
 async function sleep(ms: number): Promise<void> {
