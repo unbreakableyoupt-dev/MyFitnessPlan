@@ -285,7 +285,7 @@ TRAINING + NUTRITION ALIGNMENT (override if mismatched):
 OUTPUT STRUCTURE (compact — token budget is tight)
 ═══════════════════════════════════════════════════════════════
 
-Return ONLY the JSON below. Omitted fields (marked †) must NOT appear in your output.
+Return ONLY the JSON below. Do NOT add any fields beyond what is shown.
 
 {
   "overview": {
@@ -333,16 +333,13 @@ Return ONLY the JSON below. Omitted fields (marked †) must NOT appear in your 
     "method": "Double Progression or Linear — be specific",
     "overview": "1–2 sentences",
     "rules": ["rule 1", "rule 2", "rule 3"]
-    † DO NOT include rpeExplanation, rirExplanation, or weeklyGoals
   },
   "deload": {
     "frequency": "Every 4th week",
     "protocol": "50% volume, same exercises, RPE 6",
     "deloadWeekExample": {
       "mindset": "1–2 sentence coaching message"
-      † DO NOT include adjustments array
     }
-    † DO NOT include rationale
   },
   "nutrition": {
     "included": false,
@@ -522,11 +519,10 @@ export function buildUserPrompt(formData: FormData): string {
   )
   lines.push('Generate exactly 3 FAQ items that are specific and relevant to this person.')
   lines.push(
-    'CONCISENESS RULES (strictly enforced — you have a 4000-token output budget):\n' +
+    'CONCISENESS RULES (strictly enforced — you have an 8000-token output budget):\n' +
     '  • exercise "notes" field: maximum 12 words\n' +
     '  • warmup / cooldown fields: maximum 15 words\n' +
     '  • overview strings: maximum 2 sentences each\n' +
-    '  • progression.rpeExplanation / rirExplanation: maximum 2 sentences each\n' +
     '  • All other string values: as brief as accurate\n' +
     '  • You MUST emit a fully closed, valid JSON object — never leave brackets open'
   )
