@@ -1,25 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { buildProgramPDF } from '@/lib/pdf'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-function getTransporter() {
-  const host = process.env.SMTP_HOST
-  if (!host) return null
-
-  return nodemailer.createTransport({
-    host,
-    port: parseInt(process.env.SMTP_PORT ?? '587', 10),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  })
-}
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   let email: string
@@ -37,17 +22,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ success: false, error: 'Missing email or programText' }, { status: 400 })
   }
 
-  console.log('[send-program] SMTP config check:', {
-    SMTP_HOST: process.env.SMTP_HOST ?? '(not set)',
-    SMTP_PORT: process.env.SMTP_PORT ?? '(not set)',
-    SMTP_USER: process.env.SMTP_USER ?? '(not set)',
-    SMTP_PASS: process.env.SMTP_PASS ? '(set)' : '(not set)',
-    SMTP_FROM: process.env.SMTP_FROM ?? '(not set)',
-  })
-
-  const transporter = getTransporter()
-  if (!transporter) {
-    console.warn('[send-program] SMTP_HOST not set — email delivery disabled. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM in your environment to enable.')
+  const apiKey = process.env.RESEND_API_KEY
+  console.log('[send-program] RESEND_API_KEY:', apiKey ? '(set)' : '(not set)')
+  if (!apiKey) {
+    console.warn('[send-program] RESEND_API_KEY not set — email delivery disabled.')
     return NextResponse.json({ success: false, error: 'Email delivery not configured' }, { status: 503 })
   }
 
@@ -63,10 +41,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // Send email
   try {
-    const from = process.env.SMTP_FROM ?? process.env.SMTP_USER
-    console.log(`[send-program] Attempting sendMail → to: ${email}, from: ${from}`)
-    await transporter.sendMail({
-      from,
+    const resend = new Resend(apiKey)
+    console.log(`[send-program] Attempting send → to: ${email}, from: onboarding@resend.dev`)
+    const { error } = await resend.emails.send({
+      from: 'onboarding@resend.dev',
       to: email,
       subject: 'Your Personalized Fitness Program — MyFitnessPlan',
       html: `
@@ -82,10 +60,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         {
           filename: 'my-fitness-program.pdf',
           content: pdfBuffer,
-          contentType: 'application/pdf',
         },
       ],
     })
+
+    if (error) {
+      console.error('[send-program] Resend error:', error)
+      return NextResponse.json({ success: false, error: 'Failed to send email' }, { status: 500 })
+    }
 
     console.log(`[send-program] Email sent to ${email}`)
     return NextResponse.json({ success: true })
