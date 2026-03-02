@@ -4,6 +4,44 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Zap, Download, Mail, CheckCircle } from 'lucide-react'
 
+function renderInline(text: string): (string | React.ReactElement)[] {
+  const parts = text.split(/(\*\*[^*]+\*\*)/)
+  return parts.map((part, i) =>
+    part.startsWith('**') && part.endsWith('**')
+      ? <strong key={i} className="text-zinc-100 font-semibold">{part.slice(2, -2)}</strong>
+      : part
+  )
+}
+
+function renderMarkdown(text: string): React.ReactElement[] {
+  return text.split('\n').map((line, i) => {
+    if (line.startsWith('## ')) {
+      return (
+        <h2 key={i} className="text-base font-bold text-orange-400 mt-6 mb-1 pb-1 border-b border-zinc-800">
+          {line.slice(3)}
+        </h2>
+      )
+    }
+    if (line.startsWith('### ')) {
+      return (
+        <h3 key={i} className="text-sm font-bold text-zinc-200 mt-4 mb-1">
+          {line.slice(4)}
+        </h3>
+      )
+    }
+    if (line.trim() === '') {
+      return <div key={i} className="h-1" />
+    }
+    return (
+      <p key={i} className="text-sm text-zinc-300 leading-relaxed">
+        {renderInline(line)}
+      </p>
+    )
+  })
+}
+
+import React from 'react'
+
 export default function SuccessPage() {
   const [programText, setProgramText] = useState<string | null>(null)
   const [generatedAt, setGeneratedAt] = useState<string | null>(null)
@@ -92,10 +130,8 @@ export default function SuccessPage() {
               <div className="px-4 py-3 border-b border-zinc-800">
                 <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Your Program</span>
               </div>
-              <div className="p-6">
-                <pre className="whitespace-pre-wrap text-sm text-zinc-300 leading-relaxed font-sans">
-                  {programText}
-                </pre>
+              <div className="p-6 space-y-0.5">
+                {renderMarkdown(programText)}
               </div>
             </div>
           ) : (

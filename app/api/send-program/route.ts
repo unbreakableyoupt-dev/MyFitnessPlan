@@ -37,9 +37,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ success: false, error: 'Missing email or programText' }, { status: 400 })
   }
 
+  console.log('[send-program] SMTP config check:', {
+    SMTP_HOST: process.env.SMTP_HOST ?? '(not set)',
+    SMTP_PORT: process.env.SMTP_PORT ?? '(not set)',
+    SMTP_USER: process.env.SMTP_USER ?? '(not set)',
+    SMTP_PASS: process.env.SMTP_PASS ? '(set)' : '(not set)',
+    SMTP_FROM: process.env.SMTP_FROM ?? '(not set)',
+  })
+
   const transporter = getTransporter()
   if (!transporter) {
-    // SMTP not configured — log and return gracefully
     console.warn('[send-program] SMTP_HOST not set — email delivery disabled. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM in your environment to enable.')
     return NextResponse.json({ success: false, error: 'Email delivery not configured' }, { status: 503 })
   }
@@ -57,6 +64,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Send email
   try {
     const from = process.env.SMTP_FROM ?? process.env.SMTP_USER
+    console.log(`[send-program] Attempting sendMail → to: ${email}, from: ${from}`)
     await transporter.sendMail({
       from,
       to: email,
