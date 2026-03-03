@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Zap, Lock, ArrowLeft, Check, Cpu } from 'lucide-react'
+import { Zap, Lock, ArrowLeft, Check, Cpu, Tag } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { FormData } from '@/lib/types'
@@ -31,13 +31,20 @@ const CARD_ELEMENT_OPTIONS = {
   hidePostalCode: true,
 }
 
+type CouponState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'valid'; discountAmount: number; finalAmount: number; couponName: string }
+  | { status: 'invalid'; error: string }
+
 interface PaymentFormProps {
   clientSecret: string
   formData: FormData
   selectedTier: (typeof PRICING_TIERS)[0]
+  finalPrice: number
 }
 
-function PaymentForm({ clientSecret, formData, selectedTier }: PaymentFormProps) {
+function PaymentForm({ clientSecret, formData, selectedTier, finalPrice }: PaymentFormProps) {
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
@@ -50,6 +57,8 @@ function PaymentForm({ clientSecret, formData, selectedTier }: PaymentFormProps)
 
   const isGenerating = generationStatus === 'generating'
   const isBusy = isProcessing || isGenerating
+
+  const priceDisplay = finalPrice % 1 === 0 ? `$${finalPrice}` : `$${finalPrice.toFixed(2)}`
 
   const handleSubmit = async () => {
     if (!stripe || !elements) return
@@ -164,7 +173,7 @@ function PaymentForm({ clientSecret, formData, selectedTier }: PaymentFormProps)
         disabled={!stripe || isBusy}
       >
         <Lock className="h-4 w-4" />
-        {isGenerating ? 'Generating Program…' : isProcessing ? 'Processing Payment…' : `Pay $${selectedTier.price}.00 Securely`}
+        {isGenerating ? 'Generating Program…' : isProcessing ? 'Processing Payment…' : `Pay ${priceDisplay} Securely`}
       </Button>
 
       <p className="text-center text-xs text-zinc-600">
@@ -177,7 +186,11 @@ function PaymentForm({ clientSecret, formData, selectedTier }: PaymentFormProps)
 export default function CheckoutPage() {
   const [formData, setFormData] = useState<FormData | null>(null)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null)
   const [intentError, setIntentError] = useState<string | null>(null)
+
+  const [couponInput, setCouponInput] = useState('')
+  const [couponState, setCouponState] = useState<CouponState>({ status: 'idle' })
 
   useEffect(() => {
     const stored = sessionStorage.getItem('programforge_form')
@@ -186,6 +199,9 @@ export default function CheckoutPage() {
 
   const hasNutrition = formData?.nutritionAddOn === true
   const selectedTier = hasNutrition ? PRICING_TIERS[1] : PRICING_TIERS[0]
+
+  const finalPrice =
+    couponState.status === 'valid' ? couponState.finalAmount / 100 : selectedTier.price
 
   // Create a PaymentIntent as soon as we know the tier
   useEffect(() => {
@@ -200,12 +216,46 @@ export default function CheckoutPage() {
       .then((data) => {
         if (data.clientSecret) {
           setClientSecret(data.clientSecret)
+          setPaymentIntentId(data.paymentIntentId)
         } else {
           setIntentError('Failed to initialize payment. Please refresh and try again.')
         }
       })
       .catch(() => setIntentError('Failed to connect to payment service. Please refresh.'))
   }, [formData, selectedTier.id])
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase()
+    if (!code || !paymentIntentId) return
+
+    setCouponState({ status: 'loading' })
+
+    try {
+      const res = await fetch('/api/validate-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          paymentIntentId,
+          originalAmount: selectedTier.price * 100,
+        }),
+      })
+      const data = await res.json()
+
+      if (data.valid) {
+        setCouponState({
+          status: 'valid',
+          discountAmount: data.discountAmount,
+          finalAmount: data.finalAmount,
+          couponName: data.couponName,
+        })
+      } else {
+        setCouponState({ status: 'invalid', error: data.error })
+      }
+    } catch {
+      setCouponState({ status: 'invalid', error: 'Failed to validate coupon. Please try again.' })
+    }
+  }
 
   if (!formData) {
     return (
@@ -261,6 +311,60 @@ export default function CheckoutPage() {
             <div className="order-2 lg:order-1">
               <h2 className="text-xl font-bold text-zinc-100 mb-6">Payment Details</h2>
 
+              {/* Coupon code */}
+              <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-5 mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Tag className="h-4 w-4 text-orange-400" />
+                  <p className="text-sm font-semibold text-zinc-300">Have a coupon code?</p>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter code"
+                    value={couponInput}
+                    onChange={(e) => {
+                      setCouponInput(e.target.value.toUpperCase())
+                      if (couponState.status === 'invalid') setCouponState({ status: 'idle' })
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                    disabled={couponState.status === 'valid' || couponState.status === 'loading'}
+                    className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-orange-500/60 disabled:opacity-50 transition-colors"
+                  />
+                  <button
+                    onClick={handleApplyCoupon}
+                    disabled={
+                      !couponInput.trim() ||
+                      couponState.status === 'valid' ||
+                      couponState.status === 'loading' ||
+                      !paymentIntentId
+                    }
+                    className="rounded-lg bg-orange-500 hover:bg-orange-400 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-semibold text-white transition-colors min-w-[72px] flex items-center justify-center"
+                  >
+                    {couponState.status === 'loading' ? (
+                      <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    ) : couponState.status === 'valid' ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      'Apply'
+                    )}
+                  </button>
+                </div>
+
+                {couponState.status === 'valid' && (
+                  <div className="mt-2.5 flex items-center gap-1.5 text-sm text-green-400">
+                    <Check className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>
+                      <span className="font-semibold">{couponState.couponName}</span> applied — you save{' '}
+                      <span className="font-semibold">${(couponState.discountAmount / 100).toFixed(2)}</span>
+                    </span>
+                  </div>
+                )}
+
+                {couponState.status === 'invalid' && (
+                  <p className="mt-2.5 text-sm text-red-400">{couponState.error}</p>
+                )}
+              </div>
+
               <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-6">
                 {intentError ? (
                   <p className="text-sm text-red-400">{intentError}</p>
@@ -278,6 +382,7 @@ export default function CheckoutPage() {
                       clientSecret={clientSecret}
                       formData={formData}
                       selectedTier={selectedTier}
+                      finalPrice={finalPrice}
                     />
                   </Elements>
                 )}
@@ -352,11 +457,31 @@ export default function CheckoutPage() {
 
                 {/* Total */}
                 <div className="px-5 py-4">
+                  {couponState.status === 'valid' && (
+                    <div className="flex items-center justify-between mb-2 text-sm">
+                      <span className="text-zinc-500">
+                        Discount{' '}
+                        <span className="rounded bg-green-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-green-400 uppercase">
+                          {couponState.couponName}
+                        </span>
+                      </span>
+                      <span className="text-green-400 font-medium">
+                        −${(couponState.discountAmount / 100).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-zinc-100">Total</span>
-                    <div className="text-right">
-                      <span className="text-3xl font-black text-orange-400">${selectedTier.price}</span>
-                      <span className="text-zinc-500 text-sm ml-1">one-time</span>
+                    <div className="text-right flex items-baseline gap-2">
+                      {couponState.status === 'valid' && (
+                        <span className="text-sm text-zinc-500 line-through">
+                          ${selectedTier.price}.00
+                        </span>
+                      )}
+                      <span className="text-3xl font-black text-orange-400">
+                        {finalPrice % 1 === 0 ? `$${finalPrice}` : `$${finalPrice.toFixed(2)}`}
+                      </span>
+                      <span className="text-zinc-500 text-sm">one-time</span>
                     </div>
                   </div>
                   <p className="mt-2 text-xs text-zinc-600">
