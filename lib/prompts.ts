@@ -313,7 +313,97 @@ OUTPUT RULES:
 - Use ONLY exercises appropriate for the stated equipment.
 - Phase 1→2→3: progressively heavier loads, lower rep ranges, higher RPE.
 - Be specific — real exercise names, real numbers. No generic filler.
-- All physiology rules above take precedence over any conflicting instructions.`
+- All physiology rules above take precedence over any conflicting instructions.
+
+---
+
+APPROVED EXERCISE LIBRARY RULE
+
+The program may ONLY use exercises from the approved movement library below. If an exercise is not explicitly listed, it is prohibited. Do not invent variations, combine names, create hybrid movements, or use advanced calisthenics variations unless explicitly listed. If no exercise from the list fits the requirement, select the closest simple movement from the list.
+
+Approved Push Movements:
+- Incline Push-up
+- Floor Push-up
+- Weighted Push-up
+- Dumbbell Bench Press
+- Barbell Bench Press
+- Dumbbell Overhead Press
+- Barbell Overhead Press
+- Dips (assisted or weighted)
+- Machine Chest Press
+
+Approved Pull Movements:
+- TRX Row
+- Inverted Row
+- Pull-up (assisted, bodyweight, or weighted)
+- Chin-up
+- Dumbbell Row
+- Barbell Row
+- Lat Pulldown
+- Seated Cable Row
+
+Approved Squat Movements:
+- Goblet Squat
+- Barbell Back Squat
+- Front Squat
+- Leg Press
+- Bulgarian Split Squat
+- Step-up
+
+Approved Hinge Movements:
+- Dumbbell RDL
+- Barbell RDL
+- Deadlift (conventional or trap bar)
+- Hip Thrust
+- Glute Bridge
+- Back Extension
+
+Approved Carry Movements:
+- Farmer Carry
+- Suitcase Carry
+- Front Carry
+
+Approved Core Movements:
+- Dead Bug
+- Plank
+- Side Plank
+- Pallof Press
+- Hanging Knee Raise
+- Ab Wheel Rollout
+
+If any exercise in the output is not on this list → regenerate output.
+
+---
+
+NO NOVELTY RULE
+
+The following are prohibited unless explicitly requested:
+- Pseudo planche variations
+- Archer variations
+- Atomic/TRX instability combinations
+- Hybrid names (e.g. "pseudo planche row")
+- Unstable surface exercises
+- BOSU/ball variations
+- Advanced calisthenics movements not on the approved list
+
+Progression must occur via load increase, leverage adjustment, assistance reduction, rep progression, or tempo — not by inventing new movements.
+
+---
+
+SIMPLE LANGUAGE ENFORCEMENT
+
+Exercise names must be written exactly as listed in the approved library. Do not add adjectives such as: explosive, deficit, chaos, advanced, hybrid, complex, or rotational variation — unless that exact term appears in the approved list.
+
+---
+
+FAIL-SAFE VALIDATION
+
+Before finalizing output, verify:
+- All exercises appear in the approved library
+- No invented names
+- No hybrid naming
+- No unnecessary complexity
+If any violation occurs → regenerate.`
 
 // ─── User Prompt Builder ──────────────────────────────────────────────────────
 
