@@ -780,13 +780,131 @@ STRICT PROHIBITIONS:
 - Do NOT contradict body fat logic
 - Do NOT create macro totals that don't add up`
 
+// ─── 40+ Lifter Rules ────────────────────────────────────────────────────────
+
+const OVER_40_RULES = `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AGE-SPECIFIC MODIFIER — 40+ LIFTER RULES
+Apply these rules IN ADDITION to all rules above. They override
+any conflicting defaults.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SECTION 1 — PHYSIOLOGY CONTEXT (internal use only)
+- Testosterone declines ~1–2%/year after 30 → slower recovery, less hypertrophic drive
+- Growth hormone drops → less overnight muscle repair
+- Joint cartilage thins → higher injury risk from high-impact or ballistic loading
+- Neural drive decreases → heavier relative loads feel harder
+- Connective tissue (tendons, ligaments) becomes less elastic → longer warm-up mandatory
+- Consequence: volume tolerance is lower, recovery window is longer, technique must be stricter
+
+SECTION 2 — TRAINING LEVEL RULES
+Beginner (< 1 year):
+- Limit to 2–3 days/week regardless of what was selected (up to their chosen days, never exceed 3)
+- Full-body sessions only — no splits
+- Zero barbell Olympic lifts (no power clean, no snatch)
+- Goblet squat instead of back squat for first 8 weeks (Weeks 1–8)
+- Hip hinge = Romanian Deadlift or Trap Bar Deadlift only (no conventional deadlift)
+- Max 3 working sets per exercise
+- Rep range: 10–15 for all exercises
+- No supersets — straight sets only
+
+Intermediate (1–3 years):
+- Full-body or upper/lower splits only (no bro splits)
+- Back squat and conventional deadlift allowed if form is established
+- Rep range: 8–12 primary compounds, 12–15 accessories
+- Supersets allowed for antagonist pairs only (e.g., push/pull, not squat + RDL)
+- Max 4 working sets per exercise
+
+Advanced (3+ years):
+- Any split allowed
+- Full exercise library available
+- Rep range: 5–8 for strength work, 8–15 for hypertrophy
+- Supersets allowed
+
+SECTION 3 — SESSION LENGTH STRUCTURE
+30 minutes or less:
+- Maximum 4 exercises total
+- 2 compound movements + 1–2 accessories
+- No isolation-only sessions
+- Rest periods: 90 seconds between sets (not 60s — joints need more time)
+
+45 minutes:
+- Maximum 5–6 exercises
+- 2–3 compounds + 2–3 accessories
+- Rest: 90–120 seconds
+
+60 minutes or more:
+- Maximum 7–8 exercises
+- 3 compounds + 4–5 accessories
+- Rest: 2 minutes for compounds, 90 seconds for accessories
+
+SECTION 4 — EQUIPMENT-SPECIFIC RULES
+Bodyweight only:
+- Replace all loaded hinges with Nordic Curl (if possible), Single-Leg Hip Thrust, or Cook Hip Lift
+- Replace squats with Bulgarian Split Squat (bodyweight), Step-Up, or Reverse Lunge
+- Include Shoulder CARs (Controlled Articular Rotations) as mandatory warm-up in Week 1–4
+- Add 90/90 Hip Stretch as a cooldown drill every session
+
+Dumbbells + Resistance Bands (no barbell):
+- Goblet Squat replaces back squat permanently for 40+ beginners and intermediates
+- Romanian Deadlift (dumbbells) replaces conventional deadlift for beginners
+- Banded pull-apart or face pull equivalent mandatory every session (rotator cuff health)
+- No overhead pressing above 90° of shoulder abduction for beginners
+
+Full Gym (barbells + cables + machines):
+- Trap Bar Deadlift preferred over conventional for 40+ beginners and intermediates
+- Machine-based accessories preferred over free-weight for isolation work (joint-friendly)
+- Cable face pulls mandatory 2x/week (rotator cuff maintenance)
+- Leg press can substitute squat for beginners with knee issues (note this in output)
+
+SECTION 5 — FATIGUE MANAGEMENT
+- Deload every 4th week (not 5th or 6th) — mandatory for 40+
+- Deload = 50% volume, same intensity (not a full rest week)
+- Sleep note: include a brief note in the output that 7–9 hours of sleep is non-negotiable for 40+ recovery
+- Warm-up minimum: 8–10 minutes before first working set (not optional)
+  - Include: 5 min light cardio (bike, walk), 2–3 mobility drills (hip circles, band pull-aparts, thoracic rotations)
+- Do NOT program two consecutive lower-body-dominant sessions
+- Do NOT program two consecutive upper-body-heavy sessions unless it's a push/pull split with adequate recovery
+
+SECTION 6 — PROGRAM DESIGN PRINCIPLES
+- Prioritize movement quality over load in Weeks 1–4
+- Include explicit progression model: add reps before weight (e.g., get top of rep range before adding load)
+- Do NOT use percentage-based loading for beginners — use RPE only
+- For intermediates and advanced: percentage-based loading allowed on primary compounds
+- Include a joint health note: "If any exercise causes joint pain (not muscle burn), stop and substitute."
+- Volume landmarks (weekly sets per muscle group):
+  - Beginners: 8–10 sets/muscle group/week (lower than standard 40- protocols)
+  - Intermediates: 10–14 sets/muscle group/week
+  - Advanced: 12–16 sets/muscle group/week (never exceed 20 for 40+)
+- Do NOT include max-effort 1RM testing for beginners or intermediates over 40
+- Plyometrics (box jumps, jump squats) ONLY for advanced 40+ lifters with no joint issues noted
+
+SECTION 7 — OUTPUT FORMAT ADDITIONS
+At the top of the program (after the header), add this section verbatim:
+
+---
+⚠️ 40+ LIFTER PROTOCOL ACTIVE
+This program has been specifically designed for lifters aged 40 and over.
+Key modifications applied:
+• Extended warm-up protocol (8–10 min mandatory)
+• Reduced weekly volume vs. younger lifter standards
+• Mandatory deload every 4th week
+• Joint-friendly exercise substitutions where applicable
+• Rep ranges biased toward 8–15 (connective tissue health)
+• Recovery priority: 7–9 hours sleep, no two consecutive heavy lower sessions
+---
+
+Then proceed with the normal program output format.`
+
 // ─── System Prompt Selector ────────────────────────────────────────────────────
 
 export function getSystemPrompt(formData: FormData): string {
   const minutes = Number(formData.minutesPerSession)
   const base = minutes <= 20 ? SYSTEM_PROMPT_20MIN : SYSTEM_PROMPT
-  if (formData.nutritionAddOn === true) return base + NUTRITION_ENGINE
-  return base
+  let prompt = formData.nutritionAddOn === true ? base + NUTRITION_ENGINE : base
+  if (Number(formData.age) >= 40) prompt = prompt + OVER_40_RULES
+  return prompt
 }
 
 // ─── User Prompt Builder ──────────────────────────────────────────────────────
