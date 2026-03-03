@@ -356,7 +356,13 @@ Approved Hinge Movements:
 - Deadlift (conventional or trap bar)
 - Hip Thrust
 - Glute Bridge
+- Single-Leg Glute Bridge
 - Back Extension
+
+HINGE EQUIPMENT DEFAULTS (mandatory, evaluated before selecting any hinge movement):
+- Roman chair in selected equipment: primary hinge must be Back Extension. Do not use RDL or Deadlift.
+- Bodyweight only, or no dumbbells and no barbells available: primary hinge must be Glute Bridge, progressing to Single-Leg Glute Bridge. Do not use RDL or Deadlift.
+- Dumbbells or barbells available: use Dumbbell RDL, Barbell RDL, or Deadlift as primary hinge. Glute Bridge may appear as accessory only.
 
 Approved Carry Movements:
 - Farmer Carry
