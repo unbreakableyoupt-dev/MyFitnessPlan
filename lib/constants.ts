@@ -198,8 +198,8 @@ export const EQUIPMENT_OPTIONS = [
   },
   {
     id: 'roman_chair',
-    label: 'Roman Chair',
-    description: 'Back extension / hyperextension bench',
+    label: 'Roman Chair / Back Extension',
+    description: 'Roman chair or back extension bench for posterior chain work.',
     icon: '⬇️',
   },
   {
