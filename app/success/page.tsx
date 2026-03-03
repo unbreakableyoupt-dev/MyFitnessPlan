@@ -2,8 +2,16 @@
 
 import React from 'react'
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { Zap, Download, Mail, CheckCircle } from 'lucide-react'
+
+// Loaded client-only: @react-pdf/renderer uses browser Canvas/Blob APIs that
+// cannot run during Next.js SSR.
+const ProgramDownloadButton = dynamic(
+  () => import('@/components/ProgramDownloadButton'),
+  { ssr: false },
+)
 
 function renderInline(text: string): (string | React.ReactElement)[] {
   const parts = text.split(/(\*\*[^*]+\*\*)/)
@@ -280,13 +288,14 @@ export default function SuccessPage() {
       {/* Sticky download bar */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-xl px-4 py-3">
         <div className="mx-auto max-w-3xl flex items-center gap-3">
-          <a
-            href="#"
-            className="flex flex-1 items-center justify-center gap-3 rounded-xl bg-orange-500 hover:bg-orange-400 px-5 py-3 transition-colors group"
-          >
-            <Download className="h-5 w-5 text-white group-hover:scale-110 transition-transform" />
-            <span className="font-bold text-white text-sm">Download Program PDF</span>
-          </a>
+          {programText ? (
+            <ProgramDownloadButton programText={programText} />
+          ) : (
+            <span className="flex flex-1 items-center justify-center gap-3 rounded-xl bg-zinc-700 px-5 py-3 opacity-50 cursor-not-allowed">
+              <Download className="h-5 w-5 text-white" />
+              <span className="font-bold text-white text-sm">Download Program PDF</span>
+            </span>
+          )}
           <p className="text-xs text-zinc-600 hidden sm:block flex-shrink-0">PDF also sent to your email</p>
         </div>
       </div>
