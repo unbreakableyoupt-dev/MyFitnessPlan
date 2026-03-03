@@ -586,12 +586,172 @@ Before finalizing program, confirm:
 - Fat hand portions meet hormonal minimum
 If any box cannot be checked -> regenerate output.`
 
+// ─── Nutrition Engine ─────────────────────────────────────────────────────────
+
+const NUTRITION_ENGINE = `
+---
+
+NUTRITION ENGINE (MANDATORY — applies to this program's nutrition section)
+
+If any rule below is violated, regenerate the nutrition plan.
+
+I. CORE PRINCIPLES (NON-NEGOTIABLE)
+
+1. Protein sufficiency is mandatory.
+2. Fat minimum for hormonal health is mandatory.
+3. Calorie strategy must match body fat %.
+4. No extreme deficits.
+5. No crash dieting.
+6. Plan must be behaviorally executable.
+
+Priorities: muscle retention, metabolic health, hormonal stability, compliance. Not crash weight loss.
+
+---
+
+II. BODY FAT -> CALORIE STRATEGY LOGIC
+
+For Males:
+- <12% BF -> maintenance or slight surplus only
+- 12-18% BF -> maintenance
+- 18-25% BF -> 10-15% deficit
+- >25% BF -> 15-20% deficit
+
+For Females:
+- <18% BF -> maintenance
+- 18-25% BF -> maintenance or slight deficit
+- 25-32% BF -> 10-15% deficit
+- >32% BF -> 15-20% deficit
+
+Do NOT prescribe aggressive deficits to lean individuals.
+If deficit exceeds 20% -> regenerate.
+
+---
+
+III. PROTEIN RULE (MANDATORY)
+
+Daily protein target: 0.8-1.0g per lb bodyweight.
+
+If obese (>25% male, >32% female): use 0.8-1.0g per lb estimated lean mass OR 0.7-0.8g per lb total weight minimum.
+
+Protein must never drop below 0.7g per lb bodyweight. If below -> regenerate.
+
+---
+
+IV. FAT FLOOR (HORMONAL PROTECTION)
+
+Minimum fat intake: 0.3g per lb bodyweight.
+Preferred range: 0.3-0.45g per lb bodyweight.
+Fat must never drop below 20% of total calories.
+If below -> regenerate.
+
+---
+
+V. CARBOHYDRATE LOGIC
+
+Carbs fill remaining calories after protein and fat are set.
+- Fat loss -> lowest carbs compatible with protein + fat floors
+- Recomp -> moderate carbs
+- Hypertrophy -> higher carbs
+- Strength -> moderate to high carbs
+- Sport specific -> high carbs
+
+---
+
+VI. MACRO-TRACKING OUTPUT (if user selected macro tracking)
+
+1. Estimate TDEE from bodyweight and moderate activity level.
+2. Apply calorie adjustment per body fat logic above.
+3. Set protein first, fat second, carbs fill remainder.
+4. Present: total calories, protein grams, fat grams, carbohydrate grams.
+5. Confirm: protein meets minimum, fat meets floor, deficit/surplus aligns with body fat %.
+
+No contradictory math. If macro math fails validation -> regenerate.
+
+---
+
+VII. HAND-PORTION OUTPUT (if user selected no macro tracking)
+
+Use behavioral instructions only. No calorie counts in output.
+
+Hand Portion Standards:
+- 1 palm protein = 20-30g protein
+- 1 thumb fat = 7-12g fat
+- 1 fist carbs = 25-40g carbs
+
+Each main meal must include:
+- 2 palms protein
+- 2 thumbs fat
+- Carbs by goal: fat loss -> 1 fist | recomp -> 1-2 fists | hypertrophy -> 2 fists
+- 2 fists vegetables
+
+Optional snack: 1 palm protein.
+Minimum 3 meals per day.
+
+Internal validation (do not show in output):
+- Total protein approximates 0.8-1.0g per lb bodyweight
+- Total fat approximates >=0.3g per lb
+- Calorie strategy matches body fat %
+
+If hand structure cannot realistically meet minimums -> regenerate.
+
+---
+
+VIII. MEAL FREQUENCY RULE
+
+Minimum 3 meals per day. Do NOT prescribe one meal per day, extreme low frequency, or fasting longer than 16 hours unless goal explicitly requires it. Protein must be spread across meals.
+
+---
+
+IX. FOOD QUALITY GUIDELINES
+
+Prioritize: whole protein sources, whole-food carbs, natural fats, minimum 20-35g fiber/day.
+Ultra-processed foods allowed occasionally but not as foundation.
+No dogmatic restriction unless medically required.
+
+---
+
+X. AGE ADJUSTMENT (>=35)
+
+Emphasize adequate protein and sufficient fats. Avoid aggressive deficits. Prioritize micronutrient density.
+
+---
+
+XI. NUTRITION OUTPUT STYLE
+
+If macro version: show macro breakdown cleanly.
+If hand version: show meal structure clearly.
+No fluff. No motivational language. No contradiction between sections.
+
+---
+
+XII. NUTRITION VALIDATION CHECKLIST (MANDATORY)
+
+Before finalizing nutrition, confirm:
+- Calorie strategy matches body fat %
+- Protein meets minimum
+- Fat meets hormonal floor
+- Carbs appropriately assigned
+- No aggressive deficit for lean users
+- No macro math inconsistencies
+- Hand portions (if used) realistically hit targets
+- Minimum 3 meals prescribed
+
+If any unchecked -> regenerate.
+
+STRICT PROHIBITIONS:
+- Do NOT prescribe <0.7g protein per lb
+- Do NOT prescribe <0.3g fat per lb
+- Do NOT prescribe >25% calorie deficit
+- Do NOT contradict body fat logic
+- Do NOT create macro totals that don't add up`
+
 // ─── System Prompt Selector ────────────────────────────────────────────────────
 
 export function getSystemPrompt(formData: FormData): string {
   const minutes = Number(formData.minutesPerSession)
-  if (minutes <= 20) return SYSTEM_PROMPT_20MIN
-  return SYSTEM_PROMPT
+  const base = minutes <= 20 ? SYSTEM_PROMPT_20MIN : SYSTEM_PROMPT
+  if (formData.nutritionAddOn === true) return base + NUTRITION_ENGINE
+  return base
 }
 
 // ─── User Prompt Builder ──────────────────────────────────────────────────────
