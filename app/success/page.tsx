@@ -4,7 +4,7 @@ import React from 'react'
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { Zap, Download, Mail, CheckCircle } from 'lucide-react'
+import { Zap, Download, CheckCircle } from 'lucide-react'
 
 // Loaded client-only: @react-pdf/renderer uses browser Canvas/Blob APIs that
 // cannot run during Next.js SSR.
@@ -52,18 +52,9 @@ function renderMarkdown(text: string): React.ReactElement[] {
 export default function SuccessPage() {
   const [programText, setProgramText] = useState<string | null>(null)
   const [generatedAt, setGeneratedAt] = useState<string | null>(null)
-  const [userEmail, setUserEmail] = useState<string | null>(null)
-
   useEffect(() => {
     setProgramText(sessionStorage.getItem('programforge_program_text'))
     setGeneratedAt(sessionStorage.getItem('programforge_generated_at'))
-    try {
-      const raw = sessionStorage.getItem('programforge_form')
-      if (raw) {
-        const form = JSON.parse(raw)
-        if (form.email) setUserEmail(form.email)
-      }
-    } catch {}
   }, [])
 
   const formattedDate = generatedAt
@@ -114,21 +105,6 @@ export default function SuccessPage() {
             {formattedDate && (
               <p className="text-sm text-zinc-600 mt-1">Generated on {formattedDate}</p>
             )}
-          </div>
-
-          {/* Email status */}
-          <div className="flex items-center gap-4 rounded-2xl border border-zinc-700 bg-zinc-900 px-6 py-4 mb-8">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-zinc-800">
-              <Mail className="h-5 w-5 text-zinc-400" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-zinc-200">PDF Sent to Your Email</p>
-              <p className="text-xs text-zinc-500">
-                {userEmail
-                  ? <>A PDF copy was sent to <span className="text-zinc-300 font-medium">{userEmail}</span> — check your inbox.</>
-                  : 'Check your inbox for the PDF copy of your program.'}
-              </p>
-            </div>
           </div>
 
           {/* Program content */}
@@ -296,7 +272,6 @@ export default function SuccessPage() {
               <span className="font-bold text-white text-sm">Download Program PDF</span>
             </span>
           )}
-          <p className="text-xs text-zinc-600 hidden sm:block flex-shrink-0">PDF also sent to your email</p>
         </div>
       </div>
     </div>

@@ -895,7 +895,98 @@ Key modifications applied:
 • Recovery priority: 7–9 hours sleep, no two consecutive heavy lower sessions
 ---
 
-Then proceed with the normal program output format.`
+Then proceed with the normal program output format.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+40+ FATIGUE GOVERNOR SYSTEM (MANDATORY RULE BLOCK)
+You are programming for a lifter aged 40 or older.
+You MUST obey the following fatigue management rules. If any rule is violated, the program is invalid.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ SYSTEMIC FATIGUE LIMITS
+1. No more than ONE high-intensity compound lift (RPE 8.5–9) per session.
+2. No more than TWO total sets at RPE 9 per workout.
+3. No straight sets at RPE 9 for more than 3 working sets.
+4. If a lift reaches RPE 9, all subsequent compound lifts must remain ≤ RPE 8.
+Purpose: Prevent CNS overload and recovery debt accumulation.
+
+2️⃣ AXIAL LOAD MANAGEMENT
+Axial loading = squats, deadlifts, trap bar, front squat, heavy barbell RDL.
+Rules:
+- Never program heavy squat AND heavy deadlift in the same session.
+- If one session includes a heavy axial lift (RPE 8.5+), the next lower session must be moderate (RPE ≤ 8).
+- Weekly heavy hinge exposure: maximum once per week for advanced lifters 45+.
+- Use unilateral or machine-based loading to reduce spinal fatigue when volume increases.
+Purpose: Protect spine longevity and nervous system recovery.
+
+3️⃣ VOLUME CAPS BY SESSION LENGTH
+30-Minute Sessions:
+- Maximum 14 working sets.
+- Maximum 2 primary movements.
+- Warm-up capped at 5–6 minutes.
+- If using supersets, primary lift rest must remain ≥90 seconds.
+
+45-Minute Sessions:
+- Maximum 18 working sets.
+- Warm-up capped at 8 minutes.
+- 2 primary lifts allowed.
+- Accessories must stay RPE 7–8.
+
+60-Minute Sessions:
+- Maximum 22 working sets.
+- Still no more than 1 RPE 9 lift.
+- Volume increases must come from accessories, not heavy compound stacking.
+
+If total sets exceed these caps, the program is invalid.
+
+4️⃣ INTENSITY DISTRIBUTION MODEL (MANDATORY)
+Primary Lift:
+- 1 top set at RPE 8.5–9
+- 2–4 back-off sets at 85–90% load
+- Back-offs must remain RPE 7–8
+
+Secondary Compound:
+- RPE 7–8 only
+
+Accessories:
+- RPE 6–8
+- No failure training
+
+Isolation work may reach RPE 9 only on final set and only for advanced lifters.
+
+5️⃣ WEEKLY FATIGUE BALANCE
+Across the week:
+- At least one lower-body day must be moderate intensity.
+- Push and pull volume must be balanced (pull ≥ push).
+- No more than 4 total RPE 9 sets across entire week.
+- If two sessions in a row include axial loading, second session must reduce load intensity.
+
+6️⃣ DELOAD REQUIREMENT
+Mandatory every 4th or 5th week:
+- Reduce volume by 30–40%
+- Cap intensity at RPE 6–7
+- Maintain movement patterns
+- No top sets
+
+If no deload is included, program is invalid.
+
+7️⃣ ADVANCED 45+ SPECIAL RULE
+For advanced lifters over 45:
+- Do not program weekly maximal deadlifting.
+- Use rep ranges 5–10 for compounds.
+- Avoid grind reps.
+- Progression must be sustainable for 8–12 weeks.
+Longevity > novelty.
+
+8️⃣ OUTPUT VALIDATION CHECK
+Before finalizing the program, verify:
+- Total weekly RPE 9 sets ≤ 4
+- Axial load not stacked excessively
+- Working sets within time cap
+- At least one moderate lower session per week
+- No more than one high-CNS day in a row
+
+If any condition fails, adjust before output.`
 
 // ─── System Prompt Selector ────────────────────────────────────────────────────
 

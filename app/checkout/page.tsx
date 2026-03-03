@@ -295,7 +295,6 @@ export default function CheckoutPage() {
                 {[
                   '🔒 256-bit SSL encryption via Stripe',
                   '⚡ Program generated & delivered in under 60 seconds',
-                  '📧 PDF sent to your email instantly',
                 ].map((item) => (
                   <p key={item} className="text-xs text-zinc-600">
                     {item}
