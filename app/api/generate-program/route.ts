@@ -2,7 +2,7 @@ import '@anthropic-ai/sdk/shims/node'
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { FormData } from '@/lib/types'
-import { SYSTEM_PROMPT, buildUserPrompt } from '@/lib/prompts'
+import { getSystemPrompt, buildUserPrompt } from '@/lib/prompts'
 
 // ─── Vercel Runtime Config ────────────────────────────────────────────────────
 export const runtime = 'nodejs'
@@ -250,7 +250,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       message = await client.messages.create({
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        system: SYSTEM_PROMPT,
+        system: getSystemPrompt(formData),
         messages: [{ role: 'user', content: userPrompt }],
       })
     } catch (apiErr) {
