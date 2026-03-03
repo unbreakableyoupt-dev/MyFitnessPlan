@@ -9,8 +9,9 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-// ─── Model ───────────────────────────────────────────────────────────────────
-const MODEL = 'claude-haiku-4-5-20251001'
+// ─── Models ──────────────────────────────────────────────────────────────────
+const PRIMARY_MODEL = 'claude-sonnet-4-5'       // preferred — higher quality
+const FALLBACK_MODEL = 'claude-haiku-4-5-20251001' // used when primary is overloaded
 const MAX_TOKENS = 4000
 
 // ─── Anthropic Client ─────────────────────────────────────────────────────────
@@ -243,16 +244,34 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       })
     }
 
-    // 5. Call Claude
-    console.log(`[generate-program][${requestId}] Calling Anthropic — model: ${MODEL}, max_tokens: ${MAX_TOKENS}`)
+    // 5. Call Claude — try Sonnet first, fall back to Haiku if Sonnet is overloaded
+    const systemPrompt = getSystemPrompt(formData)
     let message: Anthropic.Message
-    try {
-      message = await client.messages.create({
-        model: MODEL,
+    let modelUsed = PRIMARY_MODEL
+
+    const callClaude = (model: string) => {
+      console.log(`[generate-program][${requestId}] Calling Anthropic — model: ${model}, max_tokens: ${MAX_TOKENS}`)
+      return client.messages.create({
+        model,
         max_tokens: MAX_TOKENS,
-        system: getSystemPrompt(formData),
+        system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
       })
+    }
+
+    try {
+      try {
+        message = await callClaude(PRIMARY_MODEL)
+      } catch (primaryErr) {
+        // Sonnet overloaded → silently fall back to Haiku, no error exposed to client
+        if (primaryErr instanceof Anthropic.InternalServerError && primaryErr.status === 529) {
+          console.warn(`[generate-program][${requestId}] ${PRIMARY_MODEL} overloaded — falling back to ${FALLBACK_MODEL}`)
+          modelUsed = FALLBACK_MODEL
+          message = await callClaude(FALLBACK_MODEL)
+        } else {
+          throw primaryErr // re-throw anything that isn't a 529 overload
+        }
+      }
     } catch (apiErr) {
       // Log the raw error so we can see exactly what Anthropic returned
       console.error(`[generate-program][${requestId}] Anthropic API error:`, apiErr)
@@ -292,7 +311,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // 6. Extract text
     console.log(
       `[generate-program][${requestId}] Anthropic responded — ` +
-      `stop_reason: ${message.stop_reason}, ` +
+      `model: ${modelUsed}, stop_reason: ${message.stop_reason}, ` +
       `in: ${message.usage.input_tokens} tokens, out: ${message.usage.output_tokens} tokens`
     )
 
@@ -308,7 +327,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       success: true,
       text: content.text,
       generatedAt: new Date().toISOString(),
-      modelUsed: MODEL,
+      modelUsed,
     })
 
   } catch (outerErr) {
@@ -327,7 +346,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 export async function GET(): Promise<NextResponse> {
   return NextResponse.json({
     status: 'ok',
-    model: process.env.ANTHROPIC_API_KEY ? MODEL : 'mock (no API key)',
+    model: process.env.ANTHROPIC_API_KEY ? `${PRIMARY_MODEL} (fallback: ${FALLBACK_MODEL})` : 'mock (no API key)',
     timestamp: new Date().toISOString(),
   })
 }
