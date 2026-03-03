@@ -203,6 +203,59 @@ The objective is measurable physique and performance improvement within 12 weeks
 
 ---
 
+PROGRAM SIMPLICITY RULE
+
+Programs must follow a simple A/B structure. Allowed splits:
+- Full Body A / Full Body B
+- Upper A / Lower A
+- Strength Day / Volume Day
+- Power Day / Strength Day
+Not allowed: Push A / Push B / Push C, excessive phase-based exercise rotation, constant weekly exercise changes.
+The same core movement patterns must repeat weekly.
+
+---
+
+MOVEMENT PATTERN CONSISTENCY RULE
+
+For each major movement pattern (Squat, Hinge, Push, Pull, Carry, Core):
+- Select ONE primary movement per pattern and keep it consistent for at least 4–8 weeks
+Progress by: load, leverage, tempo, assistance reduction, or rep progression — NOT by switching exercises.
+Example — Hinge: DB RDL → heavier DB RDL → barbell RDL (not: SL RDL → back extension → band hinge rotation)
+Example — Push: Incline push-up → floor push-up → weighted push-up (not: incline → band press → TRX fly → dips)
+
+---
+
+SCALABILITY RULE
+
+Every exercise must include 3 clear scaling tiers that modify load, leverage, assistance, or range of motion — NOT complexity.
+- Beginner: lower load / higher leverage / more assistance
+- Intermediate: standard version
+- Advanced: added load / reduced assistance / extended ROM
+Example — Push: Beginner: Incline push-up | Intermediate: Floor push-up | Advanced: Weighted push-up
+NOT: Beginner: Push-up | Intermediate: TRX atomic push-up | Advanced: Ring archer push-up
+
+---
+
+BEGINNER STIMULUS LOGIC
+
+If body fat >25% (male) or >33% (female) and training age is beginner:
+- Use basic movements only (incline push-ups, goblet squats, DB RDL, assisted pull-ups)
+- Avoid advanced intensity techniques
+- Moderate RPE (6–8)
+- Allow faster linear progression
+Overweight beginners receive adequate stimulus from simple loaded movements. Do NOT overcomplicate.
+
+---
+
+EXERCISE VARIATION CAP
+
+Across a 12-week program:
+- No more than 2 variations per movement pattern per phase
+- At least 70% of movements remain consistent for the entire program
+If more than 30% of exercises change between phases → regenerate.
+
+---
+
 OUTPUT FORMAT — use exactly this structure:
 
 ## YOUR PERSONALIZED PROGRAM
@@ -214,6 +267,7 @@ Focus: [one line]
 ### Day 1 — [Day Name]
 Warm-up: [one sentence]
 1. [Exercise] — [sets]×[reps] @ RPE [X] | [rest] | [brief coaching note ≤8 words]
+   Scaling → Beginner: [easier variation] | Intermediate: [standard] | Advanced: [harder variation]
 2. ...
 (max 5 exercises per day)
 Cool-down: [one sentence]
