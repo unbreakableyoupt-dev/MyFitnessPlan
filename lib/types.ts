@@ -19,12 +19,14 @@ export type EquipmentId =
   | 'resistance_bands'
   | 'pull_up_bar'
   | 'trx'
+  | 'roman_chair'
   | 'full_gym'
 export type MinutesPerSession = 10 | 20 | 30 | 45 | 60 | 90 | ''
 export type NutritionMethod = 'macro_based' | 'hand_portion' | ''
 
 export interface FormData {
   // Step 1: Personal Info
+  email: string
   sex: Sex
   age: number | ''
   bodyweight: number | ''
@@ -56,6 +58,7 @@ export interface FormData {
 }
 
 export const INITIAL_FORM_DATA: FormData = {
+  email: '',
   sex: '',
   age: '',
   bodyweight: '',

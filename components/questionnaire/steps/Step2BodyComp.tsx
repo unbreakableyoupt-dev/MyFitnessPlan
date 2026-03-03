@@ -43,7 +43,6 @@ function BFCard({
             <div className={cn('rounded-t-[40%]', tier.id.includes('25') || tier.id.includes('30') ? 'h-3/5' : tier.id.includes('20') || tier.id.includes('21') ? 'h-2/5' : 'h-1/3', 'bg-black/20')} />
           </div>
         </div>
-        <span className="text-3xl relative z-10 drop-shadow-md">{tier.visual}</span>
         {/* Range label overlay */}
         <div className="absolute bottom-2 right-2">
           <span className="text-xs font-bold text-white/90 bg-black/30 px-2 py-0.5 rounded-full">

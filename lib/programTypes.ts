@@ -54,19 +54,19 @@ export interface ProgressionPlan {
   method: string // e.g. "Double Progression"
   overview: string
   rules: string[]
-  rpeExplanation: string
-  rirExplanation: string
-  weeklyGoals: string[] // e.g. ["Week 1-2: Learn RPE, stay conservative", ...]
+  rpeExplanation?: string // omitted in compact output
+  rirExplanation?: string // omitted in compact output
+  weeklyGoals?: string[]  // omitted in compact output
 }
 
 // ─── Deload ──────────────────────────────────────────────────────────────────
 
 export interface DeloadProtocol {
   frequency: string // e.g. "Every 4th week"
-  rationale: string
+  rationale?: string // omitted in compact output
   protocol: string
   deloadWeekExample: {
-    adjustments: string[]
+    adjustments?: string[] // omitted in compact output
     mindset: string
   }
 }

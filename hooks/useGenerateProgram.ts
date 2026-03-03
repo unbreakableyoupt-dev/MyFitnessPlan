@@ -2,69 +2,99 @@
 
 import { useState, useCallback } from 'react'
 import { FormData } from '@/lib/types'
-import { GeneratedProgram, GenerateProgramResponse } from '@/lib/programTypes'
 
-export type GenerationStatus =
-  | 'idle'
-  | 'generating'
-  | 'success'
-  | 'error'
+export type GenerationStatus = 'idle' | 'generating' | 'success' | 'error'
 
 export interface UseGenerateProgramResult {
   status: GenerationStatus
-  program: GeneratedProgram | null
+  text: string | null
   error: string | null
-  generate: (formData: FormData) => Promise<GeneratedProgram | null>
+  retryAttempt: number   // 0 = first attempt, 1-3 = which retry we're on
+  generate: (formData: FormData) => Promise<string | null>
   reset: () => void
+}
+
+const MAX_RETRIES = 3
+const RETRY_DELAY_MS = 3000
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export function useGenerateProgram(): UseGenerateProgramResult {
   const [status, setStatus] = useState<GenerationStatus>('idle')
-  const [program, setProgram] = useState<GeneratedProgram | null>(null)
+  const [text, setText] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [retryAttempt, setRetryAttempt] = useState(0)
 
-  const generate = useCallback(async (formData: FormData): Promise<GeneratedProgram | null> => {
+  const generate = useCallback(async (formData: FormData): Promise<string | null> => {
     setStatus('generating')
     setError(null)
-    setProgram(null)
+    setText(null)
+    setRetryAttempt(0)
 
-    try {
-      const res = await fetch('/api/generate-program', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ formData }),
-      })
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const res = await fetch('/api/generate-program', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ formData }),
+        })
 
-      const data: GenerateProgramResponse = await res.json()
+        let data: { success: boolean; text?: string; error?: string; retryable?: boolean; generatedAt?: string }
+        try {
+          data = await res.json()
+        } catch {
+          throw new Error(`Server error (HTTP ${res.status}) — please try again.`)
+        }
 
-      if (!data.success) {
-        setError(data.error)
+        if (!data.success) {
+          // Retry if the server flagged it as retryable and we have attempts left
+          if (data.retryable && attempt < MAX_RETRIES) {
+            setRetryAttempt(attempt)
+            await sleep(RETRY_DELAY_MS)
+            continue
+          }
+          throw new Error(data.error ?? 'Unknown server error')
+        }
+
+        const programText = data.text ?? ''
+        setText(programText)
+        setStatus('success')
+        setRetryAttempt(0)
+        sessionStorage.setItem('programforge_program_text', programText)
+        sessionStorage.setItem('programforge_generated_at', data.generatedAt ?? new Date().toISOString())
+
+        // Fire-and-forget email with PDF — does not block navigation
+        if (formData.email) {
+          fetch('/api/send-program', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: formData.email, programText }),
+          }).catch(() => {}) // failures are silently ignored; SMTP config is optional
+        }
+
+        return programText
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Network error — please check your connection.'
+        setError(message)
         setStatus('error')
         return null
       }
-
-      setProgram(data.program)
-      setStatus('success')
-
-      // Persist to sessionStorage so the success/download page can access it
-      sessionStorage.setItem('programforge_program', JSON.stringify(data.program))
-      sessionStorage.setItem('programforge_generated_at', data.generatedAt)
-
-      return data.program
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Network error — please check your connection'
-      setError(message)
-      setStatus('error')
-      return null
     }
+
+    // Should not reach here, but guard anyway
+    setError('Failed to generate program after multiple attempts — please try again.')
+    setStatus('error')
+    return null
   }, [])
 
   const reset = useCallback(() => {
     setStatus('idle')
-    setProgram(null)
+    setText(null)
     setError(null)
+    setRetryAttempt(0)
   }, [])
 
-  return { status, program, error, generate, reset }
+  return { status, text, error, retryAttempt, generate, reset }
 }

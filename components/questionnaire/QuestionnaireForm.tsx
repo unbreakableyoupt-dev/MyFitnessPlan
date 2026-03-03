@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { FormData, INITIAL_FORM_DATA } from '@/lib/types'
 import { isStepComplete } from '@/lib/utils'
 import { FORM_STEPS } from '@/lib/constants'
-import { useGenerateProgram } from '@/hooks/useGenerateProgram'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import StepIndicator from './StepIndicator'
 import Step1PersonalInfo from './steps/Step1PersonalInfo'
@@ -25,8 +24,6 @@ export default function QuestionnaireForm() {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA)
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
-  const { generate, status: generateStatus, error: generateError } = useGenerateProgram()
-
   const handleChange = useCallback((updates: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }))
   }, [])
@@ -51,12 +48,6 @@ export default function QuestionnaireForm() {
     router.push('/checkout')
   }
 
-  const handleTestGenerate = async () => {
-    sessionStorage.setItem('programforge_form', JSON.stringify(formData))
-    const program = await generate(formData)
-    if (program) router.push('/success')
-  }
-
   const progress = ((currentStep - 1) / (TOTAL_STEPS - 1)) * 100
 
   const renderStep = () => {
@@ -78,9 +69,6 @@ export default function QuestionnaireForm() {
           <Step7Summary
             formData={formData}
             onCheckout={handleCheckout}
-            onTestGenerate={handleTestGenerate}
-            isGenerating={generateStatus === 'generating'}
-            generateError={generateError}
           />
         )
       default:

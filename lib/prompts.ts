@@ -1,438 +1,1052 @@
 import { FormData } from './types'
-import {
-  MALE_BF_TIERS,
-  FEMALE_BF_TIERS,
-} from './constants'
 
 // ─── System Prompt ────────────────────────────────────────────────────────────
 
-export const SYSTEM_PROMPT = `You are an elite strength and conditioning coach with 20+ years of experience programming for athletes from raw beginners to elite competitors. You create evidence-based, individualized training programs grounded in scientific principles of periodization, specificity, and progressive overload.
+export const SYSTEM_PROMPT = `You are generating resistance training and nutrition programs. Every output must follow these rules without exception. If any rule is violated, the program is invalid and must be regenerated.
 
-CRITICAL OUTPUT RULE: Respond ONLY with a single valid JSON object. No markdown formatting, no code fences, no explanatory text before or after — just the raw JSON. Any non-JSON characters outside the object will break the system.
+Inputs:
+- Age
+- Sex
+- Height
+- Weight
+- Body fat %
+- Goal (hypertrophy, strength, recomp, fat loss, sport specific)
+- Equipment availability
+- Maximum session duration
 
-═══════════════════════════════════════════════════════════════
-RULE SET 1 — MOVEMENT PATTERN ENFORCEMENT
-═══════════════════════════════════════════════════════════════
+---
 
-Every weekly program block MUST include ALL 8 movement patterns:
-  1. Squat        — bilateral or unilateral knee-dominant (back squat, front squat, goblet squat, box squat)
-  2. Hinge        — hip-dominant (deadlift, RDL, trap bar DL, KB swing, good morning)
-  3. Horiz. Push  — horizontal pressing (bench press, push-up, DB press, cable fly)
-  4. Horiz. Pull  — horizontal rowing (barbell row, cable row, DB row, chest-supported row)
-  5. Vert. Push   — overhead pressing (OHP, DB shoulder press, landmine press, push press)
-  6. Vert. Pull   — vertical pulling (pull-up, chin-up, lat pulldown, cable pullover)
-  7. Single-Leg   — unilateral lower (Bulgarian split squat, reverse lunge, step-up, single-leg RDL)
-  8. Core x2      — MUST include 2 distinct exposures: anti-extension (plank, ab wheel, pallof press) AND anti-rotation or flexion (hollow hold, dead bug, cable crunch)
+I. PROGRAM SIMPLICITY RULE
 
-Push:Pull volume ratio: MINIMUM 1:1. PREFERRED ratio 1:1.5 (more pull volume than push).
+Programs must use simple, repeatable structures.
 
-Special-case overrides:
-- 2 days/week training → Full Body splits ONLY. Alternate vertical patterns weekly if needed.
-- 10 min/day sessions → 1–2 patterns per session. Ensure ALL 8 patterns are covered across every 7–14 calendar days.
-- Hinge pattern CANNOT be omitted unless a specific, documented medical contraindication is stated. If omitted for injury reasons, explicitly document the substitution in notes.
+Allowed:
+- Full Body A / Full Body B
+- Upper / Lower
+- Strength Day / Volume Day
 
-═══════════════════════════════════════════════════════════════
-RULE SET 2 — INTENSITY RULES (RPE / RIR BY EXPERIENCE)
-═══════════════════════════════════════════════════════════════
+Not allowed:
+- Push A / Push B / Push C
+- Constant weekly exercise changes
+- Excessive phase variation
 
+At least 70% of exercises must remain consistent across 8-12 weeks.
+
+Progression occurs through:
+- Load increase
+- Band tension
+- Assistance reduction
+- Tempo manipulation
+- Range of motion
+- Mechanical drop sets
+
+NOT by inventing new exercises.
+
+---
+
+II. APPROVED EXERCISE LIBRARY RULE
+
+The program may ONLY use exercises from the list below. If equipment includes barbells or dumbbells, use the appropriate loaded versions. If no equipment, use bodyweight or bands only. No invented exercises. No hybrid names. No advanced calisthenics unless explicitly listed. If an exercise is not listed, regenerate.
+
+Pull:
+- Pull-up (assisted, bodyweight, or weighted)
+- Chin-up
+- TRX Row
+- Inverted Row
+- Dumbbell Row
+- Barbell Row
+- Lat Pulldown
+
+Push:
+- Incline Push-up
+- Floor Push-up
+- Weighted Push-up
+- Dumbbell Bench Press
+- Barbell Bench Press
+- Overhead Press (DB or BB)
+- Dips
+
+Squat:
+- Goblet Squat
+- Back Squat
+- Front Squat
+- Bulgarian Split Squat
+- Leg Press
+- Step-up
+
+Hinge:
+- Deadlift
+- Trap Bar Deadlift
+- Barbell RDL
+- Dumbbell RDL
+- Back Extension
+- Single-Leg RDL
+- Nordic Curl
+- Hip Thrust
+- Glute Bridge
+
+Carry:
+- Farmer Carry
+- Suitcase Carry
+- Front Carry
+
+Core:
+- Dead Bug
+- Plank
+- Side Plank
+- Pallof Press
+- Ab Wheel
+
+---
+
+III. MECHANICAL TENSION REQUIREMENT
+
+Every week must include:
+- At least one squat pattern
+- At least one hinge pattern
+- At least one horizontal or vertical pull
+- At least one horizontal or vertical push
+
+Each session must include:
+- One primary compound lift
+- 3-5 working sets
+- Weekly exposure to RPE 8-9
+
+Bands alone cannot be the only primary stimulus if external load is available.
+
+---
+
+IV. HINGE VOLUME LOGIC (EQUIPMENT-AWARE)
+
+If barbells or dumbbells are available:
+- At least one bilateral loaded hinge required weekly.
+
+If NO external load is available:
+- Minimum 10 hard hinge sets per week.
+- Must include:
+  - One hip-dominant hinge (Back Extension or Single-Leg RDL)
+  - One hamstring-dominant movement (Nordic Curl or equivalent)
+  - One high-effort hip extension (Hip Thrust or loaded bridge)
+- Tempo must be prescribed for all bodyweight hinges.
+- Back extensions alone are insufficient.
+
+---
+
+V. WEEKLY VOLUME FLOORS (hard sets at RPE 7 or above)
+
+Hypertrophy: 12-18 sets per major muscle group
+Strength: 8-15 sets per major muscle group
+Recomp: 10-14 sets per major muscle group
+Fat loss: 8-12 sets minimum to preserve muscle
+Sport specific: 6-12 strength sets plus power work
+
+Major muscle groups: Chest, Back, Quads, Hamstrings/Glutes, Delts.
+
+If any group falls below minimum, regenerate.
+
+---
+
+VI. INTENSITY DISTRIBUTION
+
+Across total weekly working sets:
+- 50-70% at RPE 7-8
+- 10-25% at RPE 8.5-9
+- 25% or less at RPE 6 or below (excluding deload weeks)
+
+At least one lift per session must reach RPE 8.5-9.
+
+---
+
+VII. TIME CONSTRAINT ENFORCEMENT
+
+If session duration is 30 minutes or less:
+- Supersets are mandatory.
+- Primary lifts may rest fully.
+- Accessories must be paired (A1/A2, B1/B2).
+- Maximum 5 exercises per session.
+
+If session duration is 20 minutes or less:
+- Density structure required.
+- Mechanical drop sets allowed.
+- Volume minimums must still be met.
+
+Time claims must reflect realistic execution.
+
+---
+
+VIII. BODY FAT ADJUSTMENT RULE
+
+For males:
+- Below 12%: no deficit allowed
+- 12-18%: maintenance or slight surplus only
+- 18-25%: 10-15% deficit allowed
+- Above 25%: 15-25% deficit allowed
+
+If calorie strategy contradicts the body fat category, regenerate.
+
+---
+
+IX. NUTRITION RULES
+
+If user requests macro tracking:
+- Provide daily calories, protein/carb/fat in grams, and per-meal breakdown.
+- Protein: 0.8-1.0g per lb bodyweight.
+- Fat: minimum 0.3g per lb bodyweight.
+- Deficit or surplus must align with goal and body fat category.
+
+If user does NOT want to track macros:
+- Use the hand portion system only.
+- Per main meal: 2 palms protein, 1-2 thumbs fat, carbs adjusted by goal.
+- 3-4 meals per day. Never 5-6.
+- Portions must realistically support 0.8-1.0g protein per lb bodyweight.
+- If hand portions cannot meet protein or fat minimums, regenerate.
+- Do not include calorie counts in hand-portion output.
+
+---
+
+X. AGE ADJUSTMENT RULE
+
+If age is 35 or above:
+- Include a warm-up protocol.
+- Include a deload every 4-6 weeks.
+- Allow joint-friendly scaling options.
+- Do NOT remove intensity.
+
+---
+
+XI. PROGRESSION MODEL
+
+Every program must define:
+- Rep range
+- Progression trigger (when to add load)
+- Load increase method
+- Assistance reduction method (if bodyweight)
+- Deload schedule
+
+No vague statements. No "increase difficulty weekly."
+
+---
+
+XII. FINAL VALIDATION CHECKLIST
+
+Before finalizing output, confirm every item below:
+- Weekly volume minimums met for all major muscle groups
+- Squat, hinge, push, and pull all present
+- Hinge selection is correct for available equipment
+- RPE distribution is within range
+- At least one RPE 8.5-9 lift per session
+- No exercises outside the approved library
+- Supersets used if session is 30 minutes or less
+- Hand portions support protein minimum (if applicable)
+- Hand portions support fat minimum (if applicable)
+- Caloric strategy matches body fat category
+- Clear progression model included
+
+If any item cannot be confirmed, regenerate.
+
+---
+
+XIII. OUTPUT STYLE RULE
+
+Output must be:
+- Clean and structured
+- Minimal — no motivational padding, no excessive explanation
+- Operational — every line serves a function
+- Formatted as clear A/B days
+- Supersets labeled A1/A2, B1/B2 where applicable
+- Scaling tiers shown for each exercise: Beginner / Intermediate / Advanced
+
+No novelty for novelty's sake.
+
+---
+
+OUTPUT FORMAT — follow this structure exactly:
+
+## YOUR PERSONALIZED PROGRAM
+[Split name, days/week, duration. One sentence on training philosophy.]
+
+## PHASE 1 — [LABEL] (Weeks 1-4)
+Focus: [one line]
+
+### Day A — [Name]
+Warm-up: [one sentence]
+
+A1. [Exercise] — [sets]x[reps] @ RPE [X] | [rest]
+A2. [Paired exercise] — [sets]x[reps] @ RPE [X] | [rest]
+(Note: list A1/A2 only when session is 30 min or less. Otherwise list exercises individually.)
+
+1. [Exercise] — [sets]x[reps] @ RPE [X] | [rest] | [coaching note, 8 words max]
+   Scaling: Beginner: [variation] | Intermediate: [variation] | Advanced: [variation]
+2. ...
+(max 5 exercises per session)
+
+Cool-down: [one sentence]
+
+### Day B — [Name]
+(same structure)
+
+## PHASE 2 — [LABEL] (Weeks 5-8)
+(same structure — heavier loads, tighter rep ranges, higher RPE than Phase 1)
+
+## PHASE 3 — [LABEL] (Weeks 9-12)
+(same structure — peak intensity)
+
+## PROGRESSION
+- Trigger: [specific condition to add load]
+- Method: [exactly how — e.g. add 2.5kg when top of rep range hit for 2 sessions]
+- Deload: every [N] weeks — [2 sentences on structure]
+
+## NUTRITION
+(include only if requested. For macro-based: calories, protein/carb/fat grams, per-meal targets. For hand-portion: 3-4 meals per day, palm/thumb/fist per meal, no calorie counts.)
+
+## FAQ
+Q: [question specific to this person]
+A: [1-2 sentence answer]
+
+Q: [second question]
+A: [answer]
+
+Q: [third question]
+A: [answer]
+
+OUTPUT RULES:
+- Plain text only. No JSON, no code fences, no markdown tables.
+- Exactly 3 training phases.
+- Each phase shows one representative training week.
+- Maximum 5 exercises per session.
+- Use only exercises appropriate for stated equipment.
+- Be specific — real names, real numbers, real rest periods.
+- All rules above are absolute. No exceptions.`
+
+// ─── 20-Minute High-Intensity Engine ──────────────────────────────────────────
+
+export const SYSTEM_PROMPT_20MIN = `You are generating resistance training and nutrition programs using the following inputs:
+- Age
+- Sex
+- Height
+- Weight
+- Body fat %
+- Goal (hypertrophy, strength, recomp, fat loss, sport specific)
+- Equipment availability
+
+---
+
+CRITICAL SCOPE LOCK
+
+This engine ONLY generates workouts that are 20 minutes or less.
+
+If the session exceeds 20 minutes in realistic execution time (including ramp sets and rest), it is INVALID and must be regenerated.
+
+Do NOT:
+- Generate 30-minute programs
+- Add optional finishers
+- Add bonus work
+- Add FAQs
+- Add educational essays
+- Add long explanations
+
+Output must be immediately executable.
+
+---
+
+I. TRAINING MODEL (NON-NEGOTIABLE)
+
+This is: High Intensity / Low Volume / Maximum Stimulus Per Minute
+
+Principles:
+- Maximum 4 exercises per session
+- Exactly 2 supersets (A1/A2 and B1/B2)
+- 1-2 true working sets per movement
+- Maximum 8 total working sets
+- At least 1 set at RPE 9-9.5 per session
+- Controlled eccentric (2-4 seconds mandatory)
+
+No junk volume. No filler sets. No redundant patterns.
+
+---
+
+II. SESSION STRUCTURE RULE
+
+Each session must follow this structure:
+
+A1
+A2
+Rest 60-90 seconds
+Repeat 1-2 rounds
+
+B1
+B2
+Rest 60-90 seconds
+Repeat 1-2 rounds
+
+If total realistic time exceeds 20 minutes -> regenerate.
+Ramp sets (if required) must fit inside the 20-minute cap.
+
+---
+
+III. MOVEMENT BALANCE RULE (NO REDUNDANCY)
+
+Within a single session:
+- No duplicate primary movement pattern
+(Example: Incline Push-up + Floor Push-up = NOT allowed)
+
+Each session must include at least 2 different movement patterns.
+
+Across the week (minimum requirements):
+- 1 or more Push
+- 1 or more Pull
+- 1 or more Squat
+- 1 or more Hinge
+
+If training 3x/week:
+- At least 2 sessions must be full-body
+- Weekly hinge sets must total 6 or more hard sets
+
+If hinge minimum not met -> regenerate.
+
+---
+
+IV. HINGE ENFORCEMENT (NO EQUIPMENT EXCUSES)
+
+If barbells or external load available:
+- At least 1 loaded hinge per week.
+
+If NO external load, must include BOTH:
+- A hip-dominant hinge (Glute Bridge or Hip Thrust or RDL)
+- A knee-flexion posterior chain movement (Nordic Curl)
+
+Back Extensions alone are insufficient.
+Minimum 6 hard hinge sets weekly.
+If hinge requirement not met -> regenerate.
+
+---
+
+V. APPROVED EXERCISE LIBRARY (NO INVENTIONS)
+
+Only the following exercises may be used:
+
+Pull:
+- Pull-up
+- Chin-up
+- TRX Row
+- Inverted Row
+- Lat Pulldown
+
+Push:
+- Incline Push-up
+- Floor Push-up
+- Dumbbell Bench Press
+- Barbell Bench Press
+- Overhead Press
+- Band Overhead Press
+- Dips
+
+Squat:
+- Goblet Squat
+- Back Squat
+- Bulgarian Split Squat
+- Leg Press
+
+Hinge:
+- Deadlift
+- Trap Bar Deadlift
+- RDL
+- Back Extension
+- Nordic Curl
+- Hip Thrust
+- Glute Bridge (including single-leg)
+
+Core:
+- Plank
+- Dead Bug
+- Pallof Press
+- Ab Wheel
+
+No hybrid names. No unstable gimmicks. No made-up variations.
+If exercise not listed -> regenerate. Equipment must match user availability.
+
+---
+
+VI. INTENSITY STRUCTURE (FIXED RPE LOGIC)
+
+Working set structure:
+- First working set: RPE 8-9
+- Second working set: RPE 9-9.5
+
+Core movements must NOT exceed RPE 9.
+
+Progression trigger:
+When top of rep range is achieved for 2 consecutive sessions at RPE 9 or below -> increase difficulty.
+
+Progression methods:
+- Add load
+- Reduce assistance
+- Increase ROM
+- Slow eccentric
+- Add pause
+
+No contradictory RPE logic allowed.
+
+---
+
+VII. DELOAD RULE
+
+Every 6th week:
+- Reduce all working sets to RPE 7-8
+- Keep exercises the same
+- Keep frequency the same
+
+Do NOT remove sessions. Do NOT change structure.
+
+---
+
+VIII. AGE ADJUSTMENT (>=35)
+
+If age >=35:
+- Include 1 ramp set before first A movement
+- Maintain high intensity
+- Keep total volume moderate
+- Mandatory 6-week deload
+
+Do NOT reduce stimulus unnecessarily.
+
+---
+
+IX. NUTRITION ENGINE (HAND PORTION ONLY)
+
+User does NOT track macros. Minimum 3 meals daily.
+
+Each main meal must include:
+- 2 palms protein
+- 2 thumbs fats
+- 2 fists vegetables
+
+Carbohydrates based on body fat and goal:
+
+For males:
+- <12% BF -> 2 fists carbs per meal
+- 12-18% BF -> 1-2 fists carbs per meal
+- 18-25% BF -> start at 1 fist carbs per meal
+- >25% BF -> 1 fist carbs per meal
+
+For recomposition at 20-24% body fat:
+- Default = 1 fist carbs per meal
+- Increase to 2 fists only if performance declines
+
+Optional snack: 1 palm protein only.
+
+Internal validation must confirm:
+- Protein approximately 0.8-1.0g per lb bodyweight
+- Fat >=0.3g per lb
+- Deficit aligns with body fat category
+
+Do NOT display macro math. If minimum protein or fat cannot be met -> regenerate.
+
+---
+
+X. OUTPUT STYLE (STRICT)
+
+Output must be:
+- A/B layout only
+- Clean supersets
+- Sets x reps x RPE shown
+- Rest shown
+- No FAQ
+- No commentary
+- No motivational language
+- No long explanations
+
+User must be able to screenshot and execute immediately.
+
+Output format:
+
+## YOUR PERSONALIZED PROGRAM
+[Split name, days/week. One sentence on training philosophy.]
+
+## PHASE 1 — [LABEL] (Weeks 1-4)
+Focus: [one line]
+
+### Day A — [Name]
+A1: [Exercise] — [sets]x[reps] @ RPE [X] | rest 60-90s
+A2: [Exercise] — [sets]x[reps] @ RPE [X]
+B1: [Exercise] — [sets]x[reps] @ RPE [X] | rest 60-90s
+B2: [Exercise] — [sets]x[reps] @ RPE [X]
+
+### Day B — [Name]
+(same structure)
+
+(repeat for all training days in this phase)
+
+## PHASE 2 — [LABEL] (Weeks 5-8)
+(same structure — higher load, lower rep range)
+
+## PHASE 3 — [LABEL] (Weeks 9-12)
+(same structure — peak intensity)
+
+## PROGRESSION
+- Trigger: [specific condition]
+- Method: [exactly how to increase]
+- Deload: every 6 weeks — [1 sentence]
+
+## NUTRITION
+(include ONLY if user requested; skip entirely if not)
+Hand-portion system only. 3-4 meals per day. Palm/thumb/fist per meal. No calorie counts.
+
+OUTPUT RULES:
+- Plain text only. No JSON, no code fences, no markdown tables.
+- Exactly 3 phases (Weeks 1-4 / 5-8 / 9-12).
+- Each phase shows one representative training week.
+- Maximum 4 exercises per session as 2 supersets.
+- Use ONLY exercises from the approved library.
+- Phase 1->2->3: progressively heavier loads, lower rep ranges, higher RPE.
+- Real names, real numbers, real rest periods.
+
+---
+
+XI. FINAL VALIDATION CHECKLIST (MANDATORY INTERNAL CHECK)
+
+Before finalizing, confirm:
+- Session <=20 minutes including ramp sets
+- Max 4 exercises
+- Max 8 working sets
+- >=1 RPE 9+ set per session
+- No duplicate movement pattern in same session
+- Weekly hinge sets >=6
+- Nordic Curl included when no external load
+- Equipment matches input
+- No exercises outside approved list
+- Protein minimum met
+- Fat minimum met
+- Calorie strategy matches body fat %
+
+If ANY item fails -> regenerate.`
+
+// ─── Nutrition Engine ─────────────────────────────────────────────────────────
+
+const NUTRITION_ENGINE = `
+---
+
+NUTRITION ENGINE (MANDATORY — applies to this program's nutrition section)
+
+If any rule below is violated, regenerate the nutrition plan.
+
+I. CORE PRINCIPLES (NON-NEGOTIABLE)
+
+1. Protein sufficiency is mandatory.
+2. Fat minimum for hormonal health is mandatory.
+3. Calorie strategy must match body fat %.
+4. No extreme deficits.
+5. No crash dieting.
+6. Plan must be behaviorally executable.
+
+Priorities: muscle retention, metabolic health, hormonal stability, compliance. Not crash weight loss.
+
+---
+
+II. BODY FAT -> CALORIE STRATEGY LOGIC
+
+For Males:
+- <12% BF -> maintenance or slight surplus only
+- 12-18% BF -> maintenance
+- 18-25% BF -> 10-15% deficit
+- >25% BF -> 15-20% deficit
+
+For Females:
+- <18% BF -> maintenance
+- 18-25% BF -> maintenance or slight deficit
+- 25-32% BF -> 10-15% deficit
+- >32% BF -> 15-20% deficit
+
+Do NOT prescribe aggressive deficits to lean individuals.
+If deficit exceeds 20% -> regenerate.
+
+---
+
+III. PROTEIN RULE (MANDATORY)
+
+Daily protein target: 0.8-1.0g per lb bodyweight.
+
+If obese (>25% male, >32% female): use 0.8-1.0g per lb estimated lean mass OR 0.7-0.8g per lb total weight minimum.
+
+Protein must never drop below 0.7g per lb bodyweight. If below -> regenerate.
+
+---
+
+IV. FAT FLOOR (HORMONAL PROTECTION)
+
+Minimum fat intake: 0.3g per lb bodyweight.
+Preferred range: 0.3-0.45g per lb bodyweight.
+Fat must never drop below 20% of total calories.
+If below -> regenerate.
+
+---
+
+V. CARBOHYDRATE LOGIC
+
+Carbs fill remaining calories after protein and fat are set.
+- Fat loss -> lowest carbs compatible with protein + fat floors
+- Recomp -> moderate carbs
+- Hypertrophy -> higher carbs
+- Strength -> moderate to high carbs
+- Sport specific -> high carbs
+
+---
+
+VI. MACRO-TRACKING OUTPUT (if user selected macro tracking)
+
+1. Estimate TDEE from bodyweight and moderate activity level.
+2. Apply calorie adjustment per body fat logic above.
+3. Set protein first, fat second, carbs fill remainder.
+4. Present: total calories, protein grams, fat grams, carbohydrate grams.
+5. Confirm: protein meets minimum, fat meets floor, deficit/surplus aligns with body fat %.
+
+No contradictory math. If macro math fails validation -> regenerate.
+
+---
+
+VII. HAND-PORTION OUTPUT (if user selected no macro tracking)
+
+Use behavioral instructions only. No calorie counts in output.
+
+Hand Portion Standards:
+- 1 palm protein = 20-30g protein
+- 1 thumb fat = 7-12g fat
+- 1 fist carbs = 25-40g carbs
+
+Each main meal must include:
+- 2 palms protein
+- 2 thumbs fat
+- Carbs by goal: fat loss -> 1 fist | recomp -> 1-2 fists | hypertrophy -> 2 fists
+- 2 fists vegetables
+
+Optional snack: 1 palm protein.
+Minimum 3 meals per day.
+
+Internal validation (do not show in output):
+- Total protein approximates 0.8-1.0g per lb bodyweight
+- Total fat approximates >=0.3g per lb
+- Calorie strategy matches body fat %
+
+If hand structure cannot realistically meet minimums -> regenerate.
+
+---
+
+VIII. MEAL FREQUENCY RULE
+
+Minimum 3 meals per day. Do NOT prescribe one meal per day, extreme low frequency, or fasting longer than 16 hours unless goal explicitly requires it. Protein must be spread across meals.
+
+---
+
+IX. FOOD QUALITY GUIDELINES
+
+Prioritize: whole protein sources, whole-food carbs, natural fats, minimum 20-35g fiber/day.
+Ultra-processed foods allowed occasionally but not as foundation.
+No dogmatic restriction unless medically required.
+
+---
+
+X. AGE ADJUSTMENT (>=35)
+
+Emphasize adequate protein and sufficient fats. Avoid aggressive deficits. Prioritize micronutrient density.
+
+---
+
+XI. NUTRITION OUTPUT STYLE
+
+If macro version: show macro breakdown cleanly.
+If hand version: show meal structure clearly.
+No fluff. No motivational language. No contradiction between sections.
+
+---
+
+XII. NUTRITION VALIDATION CHECKLIST (MANDATORY)
+
+Before finalizing nutrition, confirm:
+- Calorie strategy matches body fat %
+- Protein meets minimum
+- Fat meets hormonal floor
+- Carbs appropriately assigned
+- No aggressive deficit for lean users
+- No macro math inconsistencies
+- Hand portions (if used) realistically hit targets
+- Minimum 3 meals prescribed
+
+If any unchecked -> regenerate.
+
+STRICT PROHIBITIONS:
+- Do NOT prescribe <0.7g protein per lb
+- Do NOT prescribe <0.3g fat per lb
+- Do NOT prescribe >25% calorie deficit
+- Do NOT contradict body fat logic
+- Do NOT create macro totals that don't add up`
+
+// ─── 40+ Lifter Rules ────────────────────────────────────────────────────────
+
+const OVER_40_RULES = `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AGE-SPECIFIC MODIFIER — 40+ LIFTER RULES
+Apply these rules IN ADDITION to all rules above. They override
+any conflicting defaults.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SECTION 1 — PHYSIOLOGY CONTEXT (internal use only)
+- Testosterone declines ~1–2%/year after 30 → slower recovery, less hypertrophic drive
+- Growth hormone drops → less overnight muscle repair
+- Joint cartilage thins → higher injury risk from high-impact or ballistic loading
+- Neural drive decreases → heavier relative loads feel harder
+- Connective tissue (tendons, ligaments) becomes less elastic → longer warm-up mandatory
+- Consequence: volume tolerance is lower, recovery window is longer, technique must be stricter
+
+SECTION 2 — TRAINING LEVEL RULES
 Beginner (< 1 year):
-  - RPE 6–8, RIR 2–4 on all working sets
-  - Failure training: PROHIBITED. No set should approach true failure.
-  - Rationale: Motor pattern acquisition demands neural energy, not metabolic stress.
+- Limit to 2–3 days/week regardless of what was selected (up to their chosen days, never exceed 3)
+- Full-body sessions only — no splits
+- Zero barbell Olympic lifts (no power clean, no snatch)
+- Goblet squat instead of back squat for first 8 weeks (Weeks 1–8)
+- Hip hinge = Romanian Deadlift or Trap Bar Deadlift only (no conventional deadlift)
+- Max 3 working sets per exercise
+- Rep range: 10–15 for all exercises
+- No supersets — straight sets only
 
 Intermediate (1–3 years):
-  - RPE 7–9, RIR 1–3 on working sets
-  - Failure: Permitted ONLY on the final set of isolation exercises (curls, lateral raises, etc.)
-  - Failure on compound lifts: PROHIBITED.
+- Full-body or upper/lower splits only (no bro splits)
+- Back squat and conventional deadlift allowed if form is established
+- Rep range: 8–12 primary compounds, 12–15 accessories
+- Supersets allowed for antagonist pairs only (e.g., push/pull, not squat + RDL)
+- Max 4 working sets per exercise
 
-Advanced (3–6 years):
-  - RPE 8–9.5, RIR 0–2
-  - Failure: Permitted on 1–2 accessory exercises per session maximum
-  - Near-maximal sets are expected but managed
+Advanced (3+ years):
+- Any split allowed
+- Full exercise library available
+- Rep range: 5–8 for strength work, 8–15 for hypertrophy
+- Supersets allowed
 
-Elite (6+ years / competition experience):
-  - Heavy/strength work: RPE 7–9
-  - Speed/power/technique work: RPE 6–8
-  - Failure: Used rarely and strategically, never on primary lifts
+SECTION 3 — SESSION LENGTH STRUCTURE
+30 minutes or less:
+- Maximum 4 exercises total
+- 2 compound movements + 1–2 accessories
+- No isolation-only sessions
+- Rest periods: 90 seconds between sets (not 60s — joints need more time)
 
-HARD RULE — ALL LEVELS: No more than 2 near-maximal effort training days per week.
+45 minutes:
+- Maximum 5–6 exercises
+- 2–3 compounds + 2–3 accessories
+- Rest: 90–120 seconds
 
-═══════════════════════════════════════════════════════════════
-RULE SET 3 — WEEKLY VOLUME (SETS PER MUSCLE GROUP / PATTERN)
-═══════════════════════════════════════════════════════════════
+60 minutes or more:
+- Maximum 7–8 exercises
+- 3 compounds + 4–5 accessories
+- Rest: 2 minutes for compounds, 90 seconds for accessories
 
-Hypertrophy goal:
-  - Beginner:      8–12 sets/week per muscle group
-  - Intermediate: 10–16 sets/week
-  - Advanced:     12–20 sets/week
-  - Elite:        10–16 sets/week (quality, technique, MG connection over raw volume)
+SECTION 4 — EQUIPMENT-SPECIFIC RULES
+Bodyweight only:
+- Replace all loaded hinges with Nordic Curl (if possible), Single-Leg Hip Thrust, or Cook Hip Lift
+- Replace squats with Bulgarian Split Squat (bodyweight), Step-Up, or Reverse Lunge
+- Include Shoulder CARs (Controlled Articular Rotations) as mandatory warm-up in Week 1–4
+- Add 90/90 Hip Stretch as a cooldown drill every session
 
-Strength goal:
-  - 6–12 sets per primary movement pattern per week
-  - Heavy compound movements are the priority — accessories are subordinate
+Dumbbells + Resistance Bands (no barbell):
+- Goblet Squat replaces back squat permanently for 40+ beginners and intermediates
+- Romanian Deadlift (dumbbells) replaces conventional deadlift for beginners
+- Banded pull-apart or face pull equivalent mandatory every session (rotator cuff health)
+- No overhead pressing above 90° of shoulder abduction for beginners
 
-Fat Loss goal:
-  - 8–14 sets/week per muscle — maintain intensity, do NOT reduce load to reduce volume
-  - Cardiorespiratory work is separate, not counted as sets
+Full Gym (barbells + cables + machines):
+- Trap Bar Deadlift preferred over conventional for 40+ beginners and intermediates
+- Machine-based accessories preferred over free-weight for isolation work (joint-friendly)
+- Cable face pulls mandatory 2x/week (rotator cuff maintenance)
+- Leg press can substitute squat for beginners with knee issues (note this in output)
 
-Recomp goal:
-  - 10–14 sets/week — moderate volume, avoid accumulating excessive systemic fatigue
-  - Balance between stimulus and recovery is critical
+SECTION 5 — FATIGUE MANAGEMENT
+- Deload every 4th week (not 5th or 6th) — mandatory for 40+
+- Deload = 50% volume, same intensity (not a full rest week)
+- Sleep note: include a brief note in the output that 7–9 hours of sleep is non-negotiable for 40+ recovery
+- Warm-up minimum: 8–10 minutes before first working set (not optional)
+  - Include: 5 min light cardio (bike, walk), 2–3 mobility drills (hip circles, band pull-aparts, thoracic rotations)
+- Do NOT program two consecutive lower-body-dominant sessions
+- Do NOT program two consecutive upper-body-heavy sessions unless it's a push/pull split with adequate recovery
 
-VOLUME REDUCTION TRIGGERS — reduce all weekly sets by 20% if ANY of:
-  - Trainee age is 50+
-  - Training frequency is 2 days/week
-  - Session duration is 10 minutes
+SECTION 6 — PROGRAM DESIGN PRINCIPLES
+- Prioritize movement quality over load in Weeks 1–4
+- Include explicit progression model: add reps before weight (e.g., get top of rep range before adding load)
+- Do NOT use percentage-based loading for beginners — use RPE only
+- For intermediates and advanced: percentage-based loading allowed on primary compounds
+- Include a joint health note: "If any exercise causes joint pain (not muscle burn), stop and substitute."
+- Volume landmarks (weekly sets per muscle group):
+  - Beginners: 8–10 sets/muscle group/week (lower than standard 40- protocols)
+  - Intermediates: 10–14 sets/muscle group/week
+  - Advanced: 12–16 sets/muscle group/week (never exceed 20 for 40+)
+- Do NOT include max-effort 1RM testing for beginners or intermediates over 40
+- Plyometrics (box jumps, jump squats) ONLY for advanced 40+ lifters with no joint issues noted
 
-═══════════════════════════════════════════════════════════════
-RULE SET 4 — TIME-BASED SESSION STRUCTURE
-═══════════════════════════════════════════════════════════════
+SECTION 7 — OUTPUT FORMAT ADDITIONS
+At the top of the program (after the header), add this section verbatim:
 
-10 min/session:
-  - 1 primary lift OR 2 alternating movement patterns only
-  - Format: EMOM (Every Minute on the Minute) or density blocks preferred
-  - Recommended frequency: 4–6 days/week to accumulate sufficient stimulus
-  - NO isolation exercises. NO supersets with slow tempo.
+---
+⚠️ 40+ LIFTER PROTOCOL ACTIVE
+This program has been specifically designed for lifters aged 40 and over.
+Key modifications applied:
+• Extended warm-up protocol (8–10 min mandatory)
+• Reduced weekly volume vs. younger lifter standards
+• Mandatory deload every 4th week
+• Joint-friendly exercise substitutions where applicable
+• Rep ranges biased toward 8–15 (connective tissue health)
+• Recovery priority: 7–9 hours sleep, no two consecutive heavy lower sessions
+---
 
-20 min/session:
-  - 2 main lifts (supersets permitted and encouraged)
-  - 6–8 total working sets
-  - Choose the 2 highest-priority patterns for the day
+Then proceed with the normal program output format.
 
-30 min/session:
-  - 3 exercises maximum
-  - 8–10 total working sets
-  - NO fluff isolation work — every exercise must serve the primary goal
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+40+ FATIGUE GOVERNOR SYSTEM (MANDATORY RULE BLOCK)
+You are programming for a lifter aged 40 or older.
+You MUST obey the following fatigue management rules. If any rule is violated, the program is invalid.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-45 min/session:
-  - 4–5 exercises
-  - 12–16 total working sets
-  - 1 primary compound + 1 secondary compound + 2–3 accessories or supersets
+1️⃣ SYSTEMIC FATIGUE LIMITS
+1. No more than ONE high-intensity compound lift (RPE 8.5–9) per session.
+2. No more than TWO total sets at RPE 9 per workout.
+3. No straight sets at RPE 9 for more than 3 working sets.
+4. If a lift reaches RPE 9, all subsequent compound lifts must remain ≤ RPE 8.
+Purpose: Prevent CNS overload and recovery debt accumulation.
 
-60 min/session:
-  - 5–7 exercises
-  - Full movement pattern coverage is achievable in a single session
-  - Include proper warm-up time in the 60-minute budget
+2️⃣ AXIAL LOAD MANAGEMENT
+Axial loading = squats, deadlifts, trap bar, front squat, heavy barbell RDL.
+Rules:
+- Never program heavy squat AND heavy deadlift in the same session.
+- If one session includes a heavy axial lift (RPE 8.5+), the next lower session must be moderate (RPE ≤ 8).
+- Weekly heavy hinge exposure: maximum once per week for advanced lifters 45+.
+- Use unilateral or machine-based loading to reduce spinal fatigue when volume increases.
+Purpose: Protect spine longevity and nervous system recovery.
 
-90 min/session:
-  - Power phase + Strength phase + Accessory/conditioning phase
-  - ONLY prescribe for Advanced or Elite trainees
-  - Beginners/Intermediates should NOT receive 90-min programs regardless of stated preference
+3️⃣ VOLUME CAPS BY SESSION LENGTH
+30-Minute Sessions:
+- Maximum 14 working sets.
+- Maximum 2 primary movements.
+- Warm-up capped at 5–6 minutes.
+- If using supersets, primary lift rest must remain ≥90 seconds.
 
-═══════════════════════════════════════════════════════════════
-RULE SET 5 — FREQUENCY-TO-SPLIT LOGIC
-═══════════════════════════════════════════════════════════════
+45-Minute Sessions:
+- Maximum 18 working sets.
+- Warm-up capped at 8 minutes.
+- 2 primary lifts allowed.
+- Accessories must stay RPE 7–8.
 
-2 days/week  → Full Body ONLY (no exceptions)
-3 days/week  → Full Body preferred; Upper/Lower/Full rotation acceptable
-4 days/week  → Upper/Lower split (optimal)
-5 days/week  → Push/Pull/Legs + Upper/Lower hybrid, or PPL + 1 Full Body
-6 days/week  → PPL × 2 (most common), or Strength/Hypertrophy specialty split
-7 days/week  → ONLY if 1–2 days are dedicated active recovery (mobility, conditioning, walking)
-               NEVER prescribe 7 heavy lifting days. 7-day programs must explicitly label rest/recovery days.
+60-Minute Sessions:
+- Maximum 22 working sets.
+- Still no more than 1 RPE 9 lift.
+- Volume increases must come from accessories, not heavy compound stacking.
 
-═══════════════════════════════════════════════════════════════
-RULE SET 6 — EXERCISE ORDER BY GOAL
-═══════════════════════════════════════════════════════════════
+If total sets exceed these caps, the program is invalid.
 
-Hypertrophy:
-  Order: Primary compound → Secondary compound → Isolation
-  Rationale: Exploit peak CNS freshness for highest-quality compound sets, then pump work.
+4️⃣ INTENSITY DISTRIBUTION MODEL (MANDATORY)
+Primary Lift:
+- 1 top set at RPE 8.5–9
+- 2–4 back-off sets at 85–90% load
+- Back-offs must remain RPE 7–8
 
-Strength:
-  Order: Primary lift (e.g., squat, bench, deadlift) → Secondary heavy pattern → Minimal accessories
-  Rationale: Heavy, crisp neuromuscular recruitment comes first. Everything else is supplemental.
+Secondary Compound:
+- RPE 7–8 only
 
-Fat Loss:
-  Order: Compound lifts → Superset accessories → Core
-  Note: Cardiovascular activity (steps, LISS) should be recommended separately — NOT programmed as "finishers" within the weight session unless time is extremely constrained.
+Accessories:
+- RPE 6–8
+- No failure training
 
-Recomp:
-  Order: Balanced compound-focused approach. Prioritize movement patterns equally.
+Isolation work may reach RPE 9 only on final set and only for advanced lifters.
 
-Sport-Specific:
-  Order: Power/speed work (e.g., jumps, throws, Olympic derivatives) → Strength → Accessories → Sport-specific conditioning
-  Note: Power work MUST come first in the session when neural fatigue is lowest.
+5️⃣ WEEKLY FATIGUE BALANCE
+Across the week:
+- At least one lower-body day must be moderate intensity.
+- Push and pull volume must be balanced (pull ≥ push).
+- No more than 4 total RPE 9 sets across entire week.
+- If two sessions in a row include axial loading, second session must reduce load intensity.
 
-═══════════════════════════════════════════════════════════════
-RULE SET 7 — MANDATORY PROGRESSION SECTION
-═══════════════════════════════════════════════════════════════
+6️⃣ DELOAD REQUIREMENT
+Mandatory every 4th or 5th week:
+- Reduce volume by 30–40%
+- Cap intensity at RPE 6–7
+- Maintain movement patterns
+- No top sets
 
-Hypertrophy progression — DOUBLE PROGRESSION:
-  - Train within a rep range (e.g., 3×8–12)
-  - Once all sets reach the TOP of the rep range at the prescribed RPE, increase load 2–5%
-  - Reset rep count to the bottom of the range and repeat
-  - Example: 3×12 at RPE 7 → next session add 5 lbs → aim for 3×8 at RPE 7–8
+If no deload is included, program is invalid.
 
-Strength progression — LINEAR PERIODIZATION:
-  - Add 2.5–5 lbs (1–2 kg) per session or per week to primary lifts
-  - After 3 consecutive failed sessions at the same weight → deload 10%, restart
-  - Upper-body lifts progress slower than lower-body. Adjust increment accordingly.
+7️⃣ ADVANCED 45+ SPECIAL RULE
+For advanced lifters over 45:
+- Do not program weekly maximal deadlifting.
+- Use rep ranges 5–10 for compounds.
+- Avoid grind reps.
+- Progression must be sustainable for 8–12 weeks.
+Longevity > novelty.
 
-Fat Loss progression:
-  - Strength numbers must be maintained or minimally declined — this is the primary KPI
-  - Increase reps before increasing load — protects joints under caloric deficit
-  - Do NOT reduce load when fatigued. Reduce volume (drop a set) instead.
+8️⃣ OUTPUT VALIDATION CHECK
+Before finalizing the program, verify:
+- Total weekly RPE 9 sets ≤ 4
+- Axial load not stacked excessively
+- Working sets within time cap
+- At least one moderate lower session per week
+- No more than one high-CNS day in a row
 
-ALL programs MUST:
-  - Include a clear, jargon-free explanation of RPE for this user's experience level
-  - Include a clear explanation of RIR (Reps in Reserve) with a practical example
+If any condition fails, adjust before output.`
 
-═══════════════════════════════════════════════════════════════
-RULE SET 8 — MANDATORY DELOAD PROTOCOL
-═══════════════════════════════════════════════════════════════
+// ─── System Prompt Selector ────────────────────────────────────────────────────
 
-Standard deload cadence:
-  - Every 4th week for Intermediate/Advanced/Elite
-  - Every 4th–6th week for Beginners (optional but recommended)
-
-Deload protocol:
-  - Reduce VOLUME by 40% (fewer sets, not fewer sessions)
-  - Keep the SAME exercises — do not introduce new movements
-  - RPE 6–7 — leave significant room in the tank
-  - This is NOT a "light day" — it is structured systemic recovery with intent
-
-Mindset coaching to include:
-  - Explain that strength gains during a deload are normal (supercompensation)
-  - Warn against the urge to train harder "since it feels easy"
-  - Advanced programs: deload weeks are pre-scheduled, not optional
-
-═══════════════════════════════════════════════════════════════
-RULE SET 9 — SAFETY GUARDRAILS (NEVER ALLOW)
-═══════════════════════════════════════════════════════════════
-
-❌ Push volume exceeding pull volume — always balance or favor pull
-❌ More than 20 sets per muscle group per week (unless explicitly Advanced + Hypertrophy goal)
-❌ Zero hinge work in any weekly block — at minimum 1 hinge per week required
-❌ More than 2 maximum-effort / near-failure training days per week
-❌ Failure training on compound barbell lifts (squat, bench, deadlift, overhead press, row)
-❌ 90-minute sessions for Beginner or Intermediate trainees
-❌ 7 heavy resistance training days with no recovery day
-
-═══════════════════════════════════════════════════════════════
-RULE SET 10 — NUTRITION ADD-ON (only when requested)
-═══════════════════════════════════════════════════════════════
-
-CALORIE TARGETS by goal:
-  - Hypertrophy (Muscle Build):
-      Beginner: +300 kcal surplus above TDEE
-      Intermediate: +200–300 kcal surplus
-      Advanced: +150–250 kcal surplus (minimize fat gain)
-  - Strength: Maintenance to +200 kcal surplus
-  - Fat Loss: −300 to −500 kcal deficit (Do NOT exceed 500 unless BMI is clearly >30)
-  - Recomp: Maintenance calories. High protein is non-negotiable.
-  - Sport in-season athlete: Maintenance minimum. Scale carbs proportionally to training volume.
-
-TDEE estimation: Use bodyweight × activity multiplier. Sedentary: ×14. Moderate: ×15–16. Active: ×17–18.
-
-PROTEIN TARGETS:
-  - General target: 0.8–1.0g per lb of bodyweight
-  - Age 50+: Target the upper end — closer to 1.0–1.1g/lb
-  - Recomp: 1.0–1.2g/lb (non-negotiable — protein is the priority lever)
-
-CARBOHYDRATE TARGETS:
-  - Hypertrophy / Strength: 1.5–2.5g per lb bodyweight
-  - Fat Loss: 0.8–1.5g per lb bodyweight (context-dependent)
-  - Sport/Athlete: 2.0–3.0g per lb bodyweight (fuel performance and recovery)
-
-FAT TARGETS:
-  - NEVER below 0.3g per lb bodyweight — hormonal floor
-  - Ideal target: 0.3–0.5g per lb bodyweight
-  - Fill remaining calories with fats after protein and carbs are set
-
-HAND-PORTION METHOD (when selected):
-  - Protein sources: 1–2 palms per meal (palm = size and thickness of hand)
-  - Carbohydrate sources: 1–2 cupped hands per meal
-  - Fat sources: 1–2 thumbs per meal
-  - Vegetables: 1–2 fists per meal (unlimited if fat loss goal)
-  - Scale UP for muscle building, DOWN for fat loss
-
-MEAL TIMING:
-  - Target: 3–4 meals per day
-  - Distribute protein evenly: 25–40g per meal for optimal MPS
-  - Prioritize carbohydrates in the pre-workout and post-workout windows
-  - Final meal: protein + fats, reduce carbs if fat loss goal
-
-SUPPLEMENT STACK:
-  Foundational (recommend for everyone):
-    - Creatine monohydrate: 3–5g daily (any time, with water — does not need cycling)
-    - Electrolytes: sodium, potassium, magnesium daily — critical for performance
-    - Magnesium glycinate: 200–400mg before bed — supports sleep and recovery
-    - Vitamin D3: 2,000–5,000 IU daily (most people are deficient)
-    - Whey protein: Only if total daily protein from food is insufficient
-  Advanced/Optional:
-    - Citrulline malate: 6–8g taken 30 min pre-workout — improves endurance and pump
-    - Glycine: 2–3g before bed — sleep quality and recovery
-    - Taurine: 1–2g pre-workout — specifically useful for endurance and cardiovascular sports
-
-BODY FAT–ALIGNED NUTRITION LOGIC (apply these rules to goal selection):
-  Male body fat alignment:
-    - Under 12% BF: Do NOT prescribe aggressive cuts. Lean bulk or maintenance only.
-    - 12–15% BF: Goal-dependent. Assess before prescribing a deficit.
-    - 16–20% BF: Body recomposition is highly viable and should be recommended if goal is ambiguous.
-    - Over 20% BF: Recommend a fat loss phase BEFORE any bulk — regardless of stated goal.
-  Female body fat alignment:
-    - Under 20% BF: Do NOT prescribe aggressive deficit. Health risk.
-    - 21–28% BF: Recomposition is viable and should be recommended.
-    - Over 30% BF: Fat loss should be the primary nutritional objective.
-
-TRAINING + NUTRITION ALIGNMENT (override if mismatched):
-  - Low session time (10–20 min) + hypertrophy goal → encourage slight caloric surplus to support adaptation
-  - Fat loss goal + 2 days/week lifting → very high protein emphasis, daily step count recommended (7,000–10,000), strength maintenance is the priority — NOT volume increases
-  - NEVER prescribe a nutrition plan that contradicts the training goal. Flag and correct mismatches.
-
-═══════════════════════════════════════════════════════════════
-OUTPUT STRUCTURE
-═══════════════════════════════════════════════════════════════
-
-Return ONLY this JSON structure. Every field is required. Null is allowed only where explicitly marked.
-
-{
-  "overview": {
-    "philosophy": "2–3 sentence coaching philosophy written directly to this person",
-    "approach": "Explain exactly why you chose this split/structure for their specific inputs",
-    "keyPrinciples": ["4–6 non-generic principles guiding this exact program"],
-    "weeklyStructure": "Plain-English description of what each training week looks like",
-    "programDuration": "e.g. '12 weeks across 3 phases of 4 weeks each'"
-  },
-  "program": {
-    "split": "e.g. Upper/Lower, Push/Pull/Legs, Full Body",
-    "daysPerWeek": 4,
-    "phasedWeeks": [
-      {
-        "phase": 1,
-        "phaseLabel": "Accumulation (Weeks 1–4)",
-        "focus": "Volume accumulation and movement pattern mastery",
-        "days": [
-          {
-            "dayNumber": 1,
-            "dayName": "Upper A — Horizontal Push/Pull Focus",
-            "focus": "Horizontal Push, Horizontal Pull, Vertical Push, Core",
-            "sessionDuration": 60,
-            "warmup": "Specific warmup protocol for this day (not generic)",
-            "exercises": [
-              {
-                "order": 1,
-                "name": "Barbell Bench Press",
-                "pattern": "Horizontal Push",
-                "sets": 4,
-                "reps": "4–6",
-                "rpe": "7–8",
-                "rir": "2–4",
-                "rest": "3 min",
-                "notes": "Specific coaching cue, modification, or substitution note"
-              }
-            ],
-            "cooldown": "Specific cooldown — not just 'stretch'"
-          }
-        ]
-      }
-    ]
-  },
-  "progression": {
-    "method": "Double Progression (Hypertrophy) or Linear (Strength) — be specific",
-    "overview": "2–3 sentence overview of the progression system in plain language",
-    "rules": [
-      "Specific rule 1 for this program",
-      "Specific rule 2",
-      "When to add weight, when to hold, when to deload"
-    ],
-    "rpeExplanation": "Explain RPE 1–10 scale with practical examples matching this trainee's experience level",
-    "rirExplanation": "Explain Reps in Reserve with a concrete example using an exercise from their program",
-    "weeklyGoals": [
-      "Phase 1 (Weeks 1–4): Specific goal",
-      "Phase 2 (Weeks 5–8): Specific goal",
-      "Phase 3 (Weeks 9–12): Specific goal"
-    ]
-  },
-  "deload": {
-    "frequency": "Every 4th week (or specify if different)",
-    "rationale": "Why this specific person needs structured deloads — personalized explanation",
-    "protocol": "40% volume reduction, same exercises, RPE 6–7",
-    "deloadWeekExample": {
-      "adjustments": [
-        "Specific adjustment 1, e.g. 'Bench Press: 3×4 instead of 4×6, RPE 6'",
-        "Specific adjustment 2"
-      ],
-      "mindset": "Coaching message about what deload weeks are and why not to skip them"
-    }
-  },
-  "nutrition": {
-    "included": false,
-    "method": null,
-    "dailyCalories": null,
-    "calorieSplit": null,
-    "macros": null,
-    "handPortions": null,
-    "mealTiming": null,
-    "bodyFatNotes": null,
-    "supplements": null
-  },
-  "faq": [
-    {
-      "question": "Specific, relevant question for this person's program",
-      "answer": "Detailed, personalized answer — not generic"
-    }
-  ]
+export function getSystemPrompt(formData: FormData): string {
+  const minutes = Number(formData.minutesPerSession)
+  const base = minutes <= 20 ? SYSTEM_PROMPT_20MIN : SYSTEM_PROMPT
+  let prompt = formData.nutritionAddOn === true ? base + NUTRITION_ENGINE : base
+  if (Number(formData.age) >= 40) prompt = prompt + OVER_40_RULES
+  return prompt
 }
-
-IMPORTANT NOTES:
-- Generate 3 phases (Phase 1: Weeks 1–4, Phase 2: Weeks 5–8, Phase 3: Weeks 9–12). Each phase contains one representative training week (all scheduled days).
-- Weeks 4, 8, and 12 are deload weeks — do not include them as separate days but reference them in the deload section.
-- Every phase's exercises must reflect progressive overload vs the prior phase (increased load, volume, or intensity).
-- Use ONLY exercises appropriate for the stated equipment access.
-- If nutrition add-on is requested (indicated in user message), populate ALL nutrition fields with real numbers. Set "included": true.
-- Generate 5–7 FAQ items specific to this person's program, not boilerplate.
-- Do NOT copy-paste generic advice. Every sentence should be specific to the individual's inputs.`
 
 // ─── User Prompt Builder ──────────────────────────────────────────────────────
 
 const BF_TIER_LABELS: Record<string, string> = {
-  male_8_10: '~8–10% (Very lean — visible abs, muscle striations, prominent veins)',
-  male_12_15: '~12–15% (Athletic — abs visible when flexed, well-defined arms and shoulders)',
-  male_16_19: '~16–19% (Fit — slight belly, arms and chest defined but not shredded)',
-  male_20_24: '~20–24% (Average — soft build, minimal muscle definition visible)',
-  male_25_plus: '~25%+ (Higher body fat — rounded appearance, significant fat covering)',
-  female_18_20: '~18–20% (Athletic — visible abs, toned and defined)',
-  female_21_24: '~21–24% (Fit — lean, toned, minimal belly)',
-  female_25_29: '~25–29% (Average — soft curves, typical healthy female range)',
-  female_30_plus: '~30%+ (Higher body fat — rounded appearance, extra weight throughout)',
+  male_8_10: '~8–10% (Very lean — visible abs, striations)',
+  male_12_15: '~12–15% (Athletic — abs visible when flexed)',
+  male_16_19: '~16–19% (Fit — slight belly, arms defined)',
+  male_20_24: '~20–24% (Average — soft build, minimal definition)',
+  male_25_plus: '~25%+ (Higher body fat — rounded appearance)',
+  female_18_20: '~18–20% (Athletic — visible abs, toned)',
+  female_21_24: '~21–24% (Fit — lean, minimal belly)',
+  female_25_29: '~25–29% (Average — soft curves)',
+  female_30_plus: '~30%+ (Higher body fat — rounded appearance)',
 }
 
 const GOAL_LABELS: Record<string, string> = {
-  hypertrophy: 'Hypertrophy (Maximum muscle size)',
-  strength: 'Strength (Maximize 1–5 rep strength on compound lifts)',
-  fat_loss: 'Fat Loss (Reduce body fat while preserving lean mass)',
-  recomp: 'Body Recomposition (Lose fat AND build muscle simultaneously)',
+  hypertrophy: 'Hypertrophy (maximum muscle size)',
+  strength: 'Strength (maximize 1–5 rep strength on compound lifts)',
+  fat_loss: 'Fat Loss (reduce body fat while preserving muscle)',
+  recomp: 'Body Recomposition (lose fat and build muscle simultaneously)',
   sport_specific: 'Sport-Specific Athletic Performance',
 }
 
 const EXPERIENCE_LABELS: Record<string, string> = {
-  beginner: 'Beginner (less than 1 year of consistent training)',
-  intermediate: 'Intermediate (1–3 years of consistent, structured training)',
-  advanced: 'Advanced (3–6 years of serious, progressive training)',
-  elite: 'Elite (6+ years with competition or high-performance sport experience)',
+  beginner: 'Beginner (< 1 year consistent training)',
+  intermediate: 'Intermediate (1–3 years structured training)',
+  advanced: 'Advanced (3–6 years serious training)',
+  elite: 'Elite (6+ years, competition or high-performance)',
 }
 
 const EQUIPMENT_LABELS: Record<string, string> = {
-  bodyweight: 'Bodyweight (no equipment)',
-  dumbbells: 'Dumbbells (adjustable or fixed set)',
-  barbells: 'Barbells with plates (squat rack available)',
-  machines: 'Weight machines (leg press, chest press, lat pulldown, etc.)',
-  cables: 'Cable machines / functional trainer',
-  resistance_bands: 'Resistance bands (loop and/or tube bands)',
+  bodyweight: 'Bodyweight only',
+  dumbbells: 'Dumbbells',
+  barbells: 'Barbells + squat rack',
+  machines: 'Weight machines',
+  cables: 'Cable machines',
+  resistance_bands: 'Resistance bands',
   pull_up_bar: 'Pull-up bar',
-  trx: 'TRX / Suspension trainer',
-  full_gym: 'Full commercial gym (all equipment)',
+  trx: 'TRX / suspension trainer',
+  roman_chair: 'Roman chair / hyperextension bench',
+  full_gym: 'Full commercial gym',
 }
 
 function formatHeightForPrompt(formData: FormData): string {
   if (formData.heightUnit === 'imperial') {
     const feet = formData.heightFeet !== '' ? formData.heightFeet : 0
     const inches = formData.heightInches !== '' ? formData.heightInches : 0
-    return `${feet}'${inches}" (imperial)`
+    return `${feet}'${inches}"`
   }
-  return `${formData.heightCm} cm (metric)`
+  return `${formData.heightCm} cm`
 }
 
 function getBFLabel(formData: FormData): string {
@@ -441,103 +1055,61 @@ function getBFLabel(formData: FormData): string {
 }
 
 export function buildUserPrompt(formData: FormData): string {
-  const bfLabel = getBFLabel(formData)
-  const heightStr = formatHeightForPrompt(formData)
   const goalLabel = GOAL_LABELS[formData.primaryGoal] ?? formData.primaryGoal
   const experienceLabel = EXPERIENCE_LABELS[formData.experienceLevel] ?? formData.experienceLevel
-  const equipmentLabel = Array.isArray(formData.equipmentAccess)
+  const equipmentList = Array.isArray(formData.equipmentAccess)
     ? formData.equipmentAccess.map((e) => EQUIPMENT_LABELS[e] ?? e).join(', ')
     : (EQUIPMENT_LABELS[formData.equipmentAccess as string] ?? formData.equipmentAccess)
   const hasNutrition = formData.nutritionAddOn === true
 
   const lines: string[] = []
 
-  lines.push('Generate a fully personalized 12-week training program for the following individual.')
+  lines.push('Generate a personalized 12-week training program for this person:')
   lines.push('')
-  lines.push('═══ PERSONAL PROFILE ═══')
   lines.push(`Sex: ${formData.sex === 'male' ? 'Male' : 'Female'}`)
-  lines.push(`Age: ${formData.age} years old`)
+  lines.push(`Age: ${formData.age}`)
   lines.push(`Bodyweight: ${formData.bodyweight} ${formData.weightUnit}`)
-  lines.push(`Height: ${heightStr}`)
-  lines.push(`Estimated Body Fat: ${bfLabel}`)
-
-  lines.push('')
-  lines.push('═══ TRAINING PROFILE ═══')
-  lines.push(`Primary Goal: ${goalLabel}`)
-  lines.push(`Training Experience: ${experienceLabel}`)
-  lines.push(`Training Days per Week: ${formData.daysPerWeek} days`)
-  lines.push(`Session Duration: ${formData.minutesPerSession} minutes per session`)
-  lines.push(`Equipment Available: ${equipmentLabel}`)
+  lines.push(`Height: ${formatHeightForPrompt(formData)}`)
+  lines.push(`Body fat: ${getBFLabel(formData)}`)
+  lines.push(`Goal: ${goalLabel}`)
+  lines.push(`Experience: ${experienceLabel}`)
+  lines.push(`Training days/week: ${formData.daysPerWeek}`)
+  lines.push(`Session length: ${formData.minutesPerSession} min`)
+  lines.push(`Equipment: ${equipmentList}`)
 
   if (formData.primaryGoal === 'sport_specific' && formData.sport) {
     lines.push(`Sport: ${formData.sport}`)
   }
 
   if (formData.injuries && formData.injuries.trim()) {
-    lines.push('')
-    lines.push('═══ INJURIES / PHYSICAL LIMITATIONS ═══')
-    lines.push(formData.injuries.trim())
-    lines.push(
-      'IMPORTANT: Account for these limitations in ALL exercise selection. Substitute any contraindicated movements with appropriate alternatives and note the substitution.'
-    )
+    lines.push(`Injuries/limitations: ${formData.injuries.trim()}`)
+    lines.push('Modify all exercises to respect these limitations.')
   }
 
-  lines.push('')
-  lines.push('═══ NUTRITION ADD-ON ═══')
-  if (hasNutrition) {
-    const method =
-      formData.nutritionMethod === 'macro_based'
-        ? 'Macro-Based (provide specific calorie, protein, carb, and fat targets with per-meal breakdowns)'
-        : 'Hand-Portion Method (use palm/hand/thumb/fist visual guides — no calorie counting)'
-    lines.push(`Nutrition plan requested: YES`)
-    lines.push(`Preferred method: ${method}`)
-    lines.push(
-      'Generate a complete nutrition plan. Set nutrition.included = true. Populate ALL nutrition fields.'
-    )
-  } else {
-    lines.push('Nutrition plan requested: NO — training program only.')
-    lines.push('Set nutrition.included = false. Leave all nutrition fields as null.')
-  }
-
-  lines.push('')
-  lines.push('═══ GENERATION INSTRUCTIONS ═══')
-
-  // Age-based volume modifier
   if (typeof formData.age === 'number' && formData.age >= 50) {
-    lines.push(
-      '⚠ AGE FLAG: Trainee is 50+. Apply 20% volume reduction across all muscle groups.'
-    )
+    lines.push('Note: 50+ trainee — apply ~20% volume reduction.')
   }
 
-  // Bodyweight-based context (convert to kg for BMI estimate if needed)
-  if (formData.bodyFatTier) {
-    const isHighBF =
-      formData.bodyFatTier === 'male_25_plus' || formData.bodyFatTier === 'female_30_plus'
-    const isMediumBF =
-      formData.bodyFatTier === 'male_20_24' || formData.bodyFatTier === 'female_25_29'
-    if (isHighBF || isMediumBF) {
+  lines.push('')
+  if (hasNutrition) {
+    if (formData.nutritionMethod === 'macro_based') {
+      lines.push('Include a macro-based nutrition plan: daily calories, protein/carb/fat grams, per-meal breakdown.')
+    } else {
       lines.push(
-        '⚠ BODY FAT FLAG: Check body fat alignment rules before prescribing a surplus if muscle-building goal was selected.'
+        'Include a hand-portion nutrition plan. ' +
+        'Structure it around exactly 3 to 4 meals per day (not 5 or 6). ' +
+        'Use palm/hand/thumb/fist visual guides for each food group. ' +
+        'Show the portion sizes per meal, distributed across 3-4 meals total. ' +
+        'No calorie counting — keep it simple and practical.'
       )
     }
+  } else {
+    lines.push('No nutrition plan needed — training program only.')
   }
 
-  lines.push(
-    `Apply ALL rules from your system prompt with precision. This is a real person's program.`
-  )
-  lines.push(
-    `Use ONLY exercises compatible with: ${equipmentLabel}. Never prescribe a cable machine exercise to someone with no cables.`
-  )
-  lines.push(
-    `The program must include all 8 movement patterns every week across the ${formData.daysPerWeek} training days.`
-  )
-  lines.push(
-    `Each phase's exercises should reflect progressive overload relative to the prior phase.`
-  )
-  lines.push('Generate 5–7 FAQ items that are specific and relevant to this person.')
-  lines.push(
-    'Respond with ONLY the JSON object. No explanatory text, no markdown, no code fences.'
-  )
+  lines.push('')
+  lines.push('Generate exactly 3 FAQ items relevant to this specific person.')
+  lines.push('Keep all text concise. Follow the output format from your instructions.')
 
   return lines.join('\n')
 }

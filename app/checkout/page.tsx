@@ -4,49 +4,208 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Zap, Lock, ArrowLeft, Check, Cpu } from 'lucide-react'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { FormData } from '@/lib/types'
 import { PRICING_TIERS } from '@/lib/constants'
 import { getGoalLabel, getEquipmentLabel } from '@/lib/utils'
 import { useGenerateProgram } from '@/hooks/useGenerateProgram'
 import Button from '@/components/ui/Button'
 
-export default function CheckoutPage() {
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+
+const CARD_ELEMENT_OPTIONS = {
+  style: {
+    base: {
+      color: '#e4e4e7',
+      fontFamily: '"Inter", ui-sans-serif, system-ui, sans-serif',
+      fontSize: '14px',
+      '::placeholder': { color: '#52525b' },
+      iconColor: '#e4e4e7',
+    },
+    invalid: {
+      color: '#f87171',
+      iconColor: '#f87171',
+    },
+  },
+  hidePostalCode: true,
+}
+
+interface PaymentFormProps {
+  clientSecret: string
+  formData: FormData
+  selectedTier: (typeof PRICING_TIERS)[0]
+}
+
+function PaymentForm({ clientSecret, formData, selectedTier }: PaymentFormProps) {
+  const stripe = useStripe()
+  const elements = useElements()
   const router = useRouter()
-  const [formData, setFormData] = useState<FormData | null>(null)
+  const { generate, status: generationStatus, error: generationError, retryAttempt } = useGenerateProgram()
+
   const [email, setEmail] = useState('')
-  const { status: generationStatus, error: generationError, generate } = useGenerateProgram()
+  const [name, setName] = useState('')
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   const isGenerating = generationStatus === 'generating'
+  const isBusy = isProcessing || isGenerating
+
+  const handleSubmit = async () => {
+    if (!stripe || !elements) return
+
+    const cardElement = elements.getElement(CardElement)
+    if (!cardElement) return
+
+    setIsProcessing(true)
+    setPaymentError(null)
+
+    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: cardElement,
+        billing_details: {
+          name: name || undefined,
+          email: email || undefined,
+        },
+      },
+    })
+
+    if (error) {
+      setPaymentError(error.message ?? 'Payment failed. Please try again.')
+      setIsProcessing(false)
+      return
+    }
+
+    if (paymentIntent?.status === 'succeeded') {
+      setIsProcessing(false)
+      const program = await generate(formData)
+      if (program) router.push('/success')
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Email */}
+      <div className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-4">
+        <p className="text-xs text-zinc-500 mb-2 font-medium uppercase tracking-wide">Email</p>
+        <input
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full bg-transparent text-zinc-200 placeholder-zinc-600 text-sm focus:outline-none"
+        />
+      </div>
+
+      {/* Card Information */}
+      <div className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-4">
+        <p className="text-xs text-zinc-500 mb-3 font-medium uppercase tracking-wide">Card Information</p>
+        <CardElement options={CARD_ELEMENT_OPTIONS} />
+      </div>
+
+      {/* Name on Card */}
+      <div className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-4">
+        <p className="text-xs text-zinc-500 mb-2 font-medium uppercase tracking-wide">Name on Card</p>
+        <input
+          type="text"
+          placeholder="Full name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full bg-transparent text-zinc-200 placeholder-zinc-600 text-sm focus:outline-none"
+        />
+      </div>
+
+      {/* Payment error */}
+      {paymentError && (
+        <div className="rounded-xl border border-red-500/50 bg-red-950/40 p-4">
+          <p className="text-sm text-red-300">{paymentError}</p>
+        </div>
+      )}
+
+      {/* Generation status */}
+      {isGenerating && (
+        <div className={`rounded-xl border p-4 ${retryAttempt > 0 ? 'border-amber-500/40 bg-amber-500/5' : 'border-orange-500/30 bg-orange-500/5'}`}>
+          <div className="flex items-center gap-3">
+            <Cpu className={`h-5 w-5 flex-shrink-0 animate-pulse ${retryAttempt > 0 ? 'text-amber-400' : 'text-orange-400'}`} />
+            <div>
+              {retryAttempt > 0 ? (
+                <>
+                  <p className="text-sm font-semibold text-amber-300">High demand — retrying ({retryAttempt}/3)…</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Anthropic servers are busy. Retrying automatically — hang tight.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-orange-300">Generating your program…</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Claude is building your personalized plan. This takes 20–40 seconds.</p>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="mt-3 h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full animate-[shimmer_2s_linear_infinite] w-2/3 ${retryAttempt > 0 ? 'bg-gradient-to-r from-amber-500 to-yellow-400' : 'bg-gradient-to-r from-orange-500 to-amber-400'}`} />
+          </div>
+        </div>
+      )}
+
+      {/* Generation error — payment succeeded but generation failed */}
+      {generationStatus === 'error' && generationError && (
+        <div className="rounded-xl border border-red-500/50 bg-red-950/40 p-4">
+          <p className="text-sm font-bold text-red-400 mb-1">Program generation failed</p>
+          <p className="text-sm text-red-300">Your payment was successful. Please contact support to receive your program.</p>
+        </div>
+      )}
+
+      <Button
+        variant="primary"
+        size="lg"
+        className="w-full justify-center gap-3"
+        loading={isBusy}
+        onClick={handleSubmit}
+        disabled={!stripe || isBusy}
+      >
+        <Lock className="h-4 w-4" />
+        {isGenerating ? 'Generating Program…' : isProcessing ? 'Processing Payment…' : `Pay $${selectedTier.price}.00 Securely`}
+      </Button>
+
+      <p className="text-center text-xs text-zinc-600">
+        Your payment is processed securely by Stripe. We never store card details.
+      </p>
+    </div>
+  )
+}
+
+export default function CheckoutPage() {
+  const [formData, setFormData] = useState<FormData | null>(null)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [intentError, setIntentError] = useState<string | null>(null)
 
   useEffect(() => {
     const stored = sessionStorage.getItem('programforge_form')
-    if (stored) {
-      setFormData(JSON.parse(stored))
-    }
+    if (stored) setFormData(JSON.parse(stored))
   }, [])
 
   const hasNutrition = formData?.nutritionAddOn === true
   const selectedTier = hasNutrition ? PRICING_TIERS[1] : PRICING_TIERS[0]
 
-  const handleStripeCheckout = async () => {
+  // Create a PaymentIntent as soon as we know the tier
+  useEffect(() => {
     if (!formData) return
-    // TODO: Replace with real Stripe checkout session creation.
-    // The flow will be:
-    //   1. POST /api/create-checkout-session → get Stripe hosted URL
-    //   2. Redirect user to Stripe → user pays
-    //   3. Stripe calls POST /api/webhook on success
-    //   4. Webhook triggers program generation + email delivery
-    //   5. User lands on /success page with download link
-    //
-    // For now: generate the program directly (bypassing payment) so
-    // the end-to-end Claude generation can be tested without Stripe.
 
-    const program = await generate(formData)
-    if (program) {
-      if (email) sessionStorage.setItem('programforge_email', email)
-      router.push('/success')
-    }
-  }
+    fetch('/api/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tierId: selectedTier.id }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret)
+        } else {
+          setIntentError('Failed to initialize payment. Please refresh and try again.')
+        }
+      })
+      .catch(() => setIntentError('Failed to connect to payment service. Please refresh.'))
+  }, [formData, selectedTier.id])
 
   if (!formData) {
     return (
@@ -98,101 +257,30 @@ export default function CheckoutPage() {
           </Link>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left: Payment form (Stripe Elements placeholder) */}
+            {/* Left: Payment form */}
             <div className="order-2 lg:order-1">
               <h2 className="text-xl font-bold text-zinc-100 mb-6">Payment Details</h2>
 
-              {/* Stripe Elements placeholder */}
-              <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-6 space-y-5">
-                <div className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-4">
-                  <p className="text-xs text-zinc-500 mb-2 font-medium uppercase tracking-wide">Email</p>
-                  <input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-transparent text-zinc-200 placeholder-zinc-600 text-sm focus:outline-none"
-                  />
-                </div>
-
-                <div className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-4">
-                  <p className="text-xs text-zinc-500 mb-2 font-medium uppercase tracking-wide">Card Information</p>
-                  <div className="text-sm text-zinc-600 italic">
-                    Stripe payment form will render here
+              <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-6">
+                {intentError ? (
+                  <p className="text-sm text-red-400">{intentError}</p>
+                ) : !clientSecret ? (
+                  <div className="flex items-center gap-3 py-4">
+                    <div className="h-4 w-4 rounded-full border-2 border-zinc-700 border-t-orange-400 animate-spin flex-shrink-0" />
+                    <span className="text-sm text-zinc-500">Preparing secure payment form…</span>
                   </div>
-                  <div className="mt-3 h-px bg-zinc-700" />
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <div className="text-sm text-zinc-600 italic">MM / YY</div>
-                    <div className="text-sm text-zinc-600 italic">CVC</div>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-4">
-                  <p className="text-xs text-zinc-500 mb-2 font-medium uppercase tracking-wide">Name on Card</p>
-                  <input
-                    type="text"
-                    placeholder="Full name"
-                    className="w-full bg-transparent text-zinc-200 placeholder-zinc-600 text-sm focus:outline-none"
-                  />
-                </div>
-
-                {/* Generation status */}
-                {isGenerating && (
-                  <div className="rounded-xl border border-orange-500/30 bg-orange-500/5 p-4">
-                    <div className="flex items-center gap-3">
-                      <Cpu className="h-5 w-5 text-orange-400 animate-pulse flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-semibold text-orange-300">Generating your program…</p>
-                        <p className="text-xs text-zinc-500 mt-0.5">
-                          Claude is building your personalized plan. This takes 20–40 seconds.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-3 h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full animate-[shimmer_2s_linear_infinite] w-2/3" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Generation error — shown prominently so you can debug */}
-                {generationStatus === 'error' && generationError && (
-                  <div className="rounded-xl border border-red-500/50 bg-red-950/40 p-4">
-                    <p className="text-sm font-bold text-red-400 mb-2">Generation failed</p>
-                    <p className="text-sm text-red-300 font-mono break-all">{generationError}</p>
-                    <p className="text-xs text-zinc-500 mt-2">
-                      Check the terminal / server logs for the full stack trace.
-                    </p>
-                  </div>
-                )}
-
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full justify-center gap-3"
-                  loading={isGenerating}
-                  onClick={handleStripeCheckout}
-                >
-                  <Lock className="h-4 w-4" />
-                  {isGenerating ? 'Generating Program…' : `Pay $${selectedTier.price}.00 Securely`}
-                </Button>
-
-                <div className="rounded-xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 p-4">
-                  <p className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">
-                    ⚠ Test Mode — Stripe Bypassed
-                  </p>
-                  <button
-                    type="button"
-                    disabled={isGenerating}
-                    onClick={handleStripeCheckout}
-                    className="w-full rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-300 hover:bg-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                ) : (
+                  <Elements
+                    stripe={stripePromise}
+                    options={{ clientSecret, appearance: { theme: 'night' } }}
                   >
-                    {isGenerating ? 'Generating…' : 'Generate Test Program (No Payment)'}
-                  </button>
-                </div>
-
-                <p className="text-center text-xs text-zinc-600">
-                  Your payment is processed securely by Stripe. We never store card details.
-                </p>
+                    <PaymentForm
+                      clientSecret={clientSecret}
+                      formData={formData}
+                      selectedTier={selectedTier}
+                    />
+                  </Elements>
+                )}
               </div>
             </div>
 
@@ -282,7 +370,6 @@ export default function CheckoutPage() {
                 {[
                   '🔒 256-bit SSL encryption via Stripe',
                   '⚡ Program generated & delivered in under 60 seconds',
-                  '📧 PDF sent to your email instantly',
                 ].map((item) => (
                   <p key={item} className="text-xs text-zinc-600">
                     {item}

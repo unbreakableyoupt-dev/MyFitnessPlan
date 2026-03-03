@@ -41,7 +41,6 @@ export default function Step3Goals({ formData, onChange }: Step3Props) {
                   : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600 hover:bg-zinc-800'
               )}
             >
-              <span className="text-2xl flex-shrink-0">{goal.icon}</span>
               <div className="flex-1 min-w-0">
                 <p
                   className={cn(
