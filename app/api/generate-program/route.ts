@@ -273,6 +273,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         msg = 'Could not connect to Anthropic — check network and try again.'
       } else if (apiErr instanceof Anthropic.BadRequestError) {
         msg = `Bad request to Anthropic: ${(apiErr as Error).message}`
+      } else if (apiErr instanceof Anthropic.InternalServerError) {
+        msg = apiErr.status === 529
+          ? 'Anthropic is temporarily overloaded — please wait a few seconds and try again.'
+          : 'Anthropic server error — please try again.'
       } else if (apiErr instanceof Error) {
         msg = `Anthropic error: ${apiErr.message}`
       }
