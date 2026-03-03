@@ -59,7 +59,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       attachments: [
         {
           filename: 'my-fitness-program.pdf',
-          content: pdfBuffer,
+          content: pdfBuffer.toString('base64'),
         },
       ],
     })

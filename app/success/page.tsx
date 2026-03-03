@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Zap, Download, Mail, CheckCircle } from 'lucide-react'
@@ -39,8 +40,6 @@ function renderMarkdown(text: string): React.ReactElement[] {
     )
   })
 }
-
-import React from 'react'
 
 export default function SuccessPage() {
   const [programText, setProgramText] = useState<string | null>(null)
