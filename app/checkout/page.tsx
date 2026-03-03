@@ -14,7 +14,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const [formData, setFormData] = useState<FormData | null>(null)
   const [email, setEmail] = useState('')
-  const { status: generationStatus, error: generationError, generate } = useGenerateProgram()
+  const { status: generationStatus, error: generationError, retryAttempt, generate } = useGenerateProgram()
 
   const isGenerating = generationStatus === 'generating'
 
@@ -138,18 +138,31 @@ export default function CheckoutPage() {
 
                 {/* Generation status */}
                 {isGenerating && (
-                  <div className="rounded-xl border border-orange-500/30 bg-orange-500/5 p-4">
+                  <div className={`rounded-xl border p-4 ${retryAttempt > 0 ? 'border-amber-500/40 bg-amber-500/5' : 'border-orange-500/30 bg-orange-500/5'}`}>
                     <div className="flex items-center gap-3">
-                      <Cpu className="h-5 w-5 text-orange-400 animate-pulse flex-shrink-0" />
+                      <Cpu className={`h-5 w-5 flex-shrink-0 animate-pulse ${retryAttempt > 0 ? 'text-amber-400' : 'text-orange-400'}`} />
                       <div>
-                        <p className="text-sm font-semibold text-orange-300">Generating your program…</p>
-                        <p className="text-xs text-zinc-500 mt-0.5">
-                          Claude is building your personalized plan. This takes 20–40 seconds.
-                        </p>
+                        {retryAttempt > 0 ? (
+                          <>
+                            <p className="text-sm font-semibold text-amber-300">
+                              High demand — retrying ({retryAttempt}/{3})…
+                            </p>
+                            <p className="text-xs text-zinc-500 mt-0.5">
+                              Anthropic servers are busy. Retrying automatically — hang tight.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm font-semibold text-orange-300">Generating your program…</p>
+                            <p className="text-xs text-zinc-500 mt-0.5">
+                              Claude is building your personalized plan. This takes 20–40 seconds.
+                            </p>
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="mt-3 h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full animate-[shimmer_2s_linear_infinite] w-2/3" />
+                      <div className={`h-full rounded-full animate-[shimmer_2s_linear_infinite] w-2/3 ${retryAttempt > 0 ? 'bg-gradient-to-r from-amber-500 to-yellow-400' : 'bg-gradient-to-r from-orange-500 to-amber-400'}`} />
                     </div>
                   </div>
                 )}

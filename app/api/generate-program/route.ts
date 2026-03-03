@@ -263,24 +263,30 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       )
 
       let msg = 'Failed to generate program — please try again.'
+      let retryable = false
       if (apiErr instanceof Anthropic.AuthenticationError || apiErr instanceof Anthropic.PermissionDeniedError) {
         msg = `API key rejected by Anthropic (${apiErr instanceof Anthropic.AuthenticationError ? 'AuthenticationError' : 'PermissionDenied'}) — check that ANTHROPIC_API_KEY is correct and active.`
       } else if (apiErr instanceof Anthropic.RateLimitError) {
         msg = 'Rate limited by Anthropic — please wait a moment and try again.'
+        retryable = true
       } else if (apiErr instanceof Anthropic.APIConnectionTimeoutError) {
         msg = 'Anthropic request timed out — please try again.'
+        retryable = true
       } else if (apiErr instanceof Anthropic.APIConnectionError) {
         msg = 'Could not connect to Anthropic — check network and try again.'
       } else if (apiErr instanceof Anthropic.BadRequestError) {
         msg = `Bad request to Anthropic: ${(apiErr as Error).message}`
       } else if (apiErr instanceof Anthropic.InternalServerError) {
-        msg = apiErr.status === 529
-          ? 'Anthropic is temporarily overloaded — please wait a few seconds and try again.'
-          : 'Anthropic server error — please try again.'
+        if (apiErr.status === 529) {
+          msg = 'Anthropic is temporarily overloaded — please wait a few seconds and try again.'
+          retryable = true
+        } else {
+          msg = 'Anthropic server error — please try again.'
+        }
       } else if (apiErr instanceof Error) {
         msg = `Anthropic error: ${apiErr.message}`
       }
-      return NextResponse.json({ success: false, error: msg }, { status: 502 })
+      return NextResponse.json({ success: false, error: msg, retryable }, { status: 502 })
     }
 
     // 6. Extract text
