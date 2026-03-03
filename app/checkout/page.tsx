@@ -30,17 +30,7 @@ export default function CheckoutPage() {
 
   const handleStripeCheckout = async () => {
     if (!formData) return
-    // TODO: Replace with real Stripe checkout session creation.
-    // The flow will be:
-    //   1. POST /api/create-checkout-session → get Stripe hosted URL
-    //   2. Redirect user to Stripe → user pays
-    //   3. Stripe calls POST /api/webhook on success
-    //   4. Webhook triggers program generation + email delivery
-    //   5. User lands on /success page with download link
-    //
-    // For now: generate the program directly (bypassing payment) so
-    // the end-to-end Claude generation can be tested without Stripe.
-
+    // TODO: POST /api/create-checkout-session → redirect to Stripe hosted URL
     const program = await generate(formData)
     if (program) {
       if (email) sessionStorage.setItem('programforge_email', email)
