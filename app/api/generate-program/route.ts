@@ -12,7 +12,7 @@ export const maxDuration = 60
 // ─── Models ──────────────────────────────────────────────────────────────────
 const PRIMARY_MODEL = 'claude-sonnet-4-5'       // preferred — higher quality
 const FALLBACK_MODEL = 'claude-haiku-4-5-20251001' // used when primary is overloaded
-const MAX_TOKENS = 4000
+const MAX_TOKENS = 8000
 
 // ─── Anthropic Client ─────────────────────────────────────────────────────────
 function getAnthropicClient(): Anthropic | null {
