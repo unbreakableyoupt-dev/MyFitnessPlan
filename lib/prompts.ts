@@ -1054,6 +1054,52 @@ function getBFLabel(formData: FormData): string {
   return BF_TIER_LABELS[formData.bodyFatTier] ?? formData.bodyFatTier
 }
 
+// Maps each exercise (from the approved library) to the equipment IDs that can provide it.
+// Exercises with no entry are always available (pure bodyweight).
+// "full_gym" unlocks everything.
+const EXERCISE_EQUIPMENT_REQUIREMENTS: Record<string, string[]> = {
+  // Pull
+  'Pull-up':              ['pull_up_bar', 'full_gym'],
+  'Chin-up':              ['pull_up_bar', 'full_gym'],
+  'TRX Row':              ['trx', 'full_gym'],
+  'Inverted Row':         ['pull_up_bar', 'barbells', 'full_gym'],
+  'Dumbbell Row':         ['dumbbells', 'full_gym'],
+  'Barbell Row':          ['barbells', 'full_gym'],
+  'Lat Pulldown':         ['machines', 'cables', 'full_gym'],
+  // Push
+  'Weighted Push-up':     ['dumbbells', 'barbells', 'resistance_bands', 'full_gym'],
+  'Dumbbell Bench Press': ['dumbbells', 'full_gym'],
+  'Barbell Bench Press':  ['barbells', 'full_gym'],
+  'Overhead Press (DB)':  ['dumbbells', 'full_gym'],
+  'Overhead Press (BB)':  ['barbells', 'full_gym'],
+  'Dips':                 ['pull_up_bar', 'full_gym'],
+  // Squat
+  'Goblet Squat':         ['dumbbells', 'full_gym'],
+  'Back Squat':           ['barbells', 'full_gym'],
+  'Front Squat':          ['barbells', 'full_gym'],
+  'Leg Press':            ['machines', 'full_gym'],
+  // Hinge
+  'Deadlift':             ['barbells', 'full_gym'],
+  'Trap Bar Deadlift':    ['barbells', 'full_gym'],
+  'Barbell RDL':          ['barbells', 'full_gym'],
+  'Dumbbell RDL':         ['dumbbells', 'full_gym'],
+  'Back Extension':       ['roman_chair', 'full_gym'],
+  'Nordic Curl':          ['roman_chair', 'full_gym'],
+  // Carry
+  'Farmer Carry':         ['dumbbells', 'barbells', 'full_gym'],
+  'Suitcase Carry':       ['dumbbells', 'full_gym'],
+  'Front Carry':          ['dumbbells', 'barbells', 'full_gym'],
+  // Core
+  'Pallof Press':         ['cables', 'resistance_bands', 'full_gym'],
+  'Ab Wheel':             ['full_gym'],
+}
+
+function getBannedExercises(equipment: string[]): string[] {
+  return Object.entries(EXERCISE_EQUIPMENT_REQUIREMENTS)
+    .filter(([, required]) => !required.some((e) => equipment.includes(e)))
+    .map(([exercise]) => exercise)
+}
+
 export function buildUserPrompt(formData: FormData): string {
   const goalLabel = GOAL_LABELS[formData.primaryGoal] ?? formData.primaryGoal
   const experienceLabel = EXPERIENCE_LABELS[formData.experienceLevel] ?? formData.experienceLevel
@@ -1076,6 +1122,17 @@ export function buildUserPrompt(formData: FormData): string {
   lines.push(`Training days/week: ${formData.daysPerWeek}`)
   lines.push(`Session length: ${formData.minutesPerSession} min`)
   lines.push(`Equipment: ${equipmentList}`)
+
+  const equipmentArray: string[] = Array.isArray(formData.equipmentAccess)
+    ? formData.equipmentAccess
+    : [formData.equipmentAccess as string]
+  const bannedExercises = getBannedExercises(equipmentArray)
+  if (bannedExercises.length > 0) {
+    lines.push('')
+    lines.push('BANNED EXERCISES — the user does NOT have the required equipment for these. Do NOT include any of them in the program:')
+    bannedExercises.forEach((ex) => lines.push(`- ${ex}`))
+    lines.push('Use only bodyweight or equipment-appropriate substitutes instead.')
+  }
 
   if (formData.primaryGoal === 'sport_specific' && formData.sport) {
     lines.push(`Sport: ${formData.sport}`)
