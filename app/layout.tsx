@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     description: 'Custom AI-generated training programs. From $19.',
     type: 'website',
   },
+  verification: {
+    google: 'zsctjSXexQU_Lv9n1tnUwmR-Mar4eI8NDiT5--aQecSQ',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
