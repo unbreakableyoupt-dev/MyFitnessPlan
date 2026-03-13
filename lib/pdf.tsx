@@ -18,6 +18,11 @@ function sanitize(text: string): string {
     .replace(/\u201C/g, '"')   // left double quote  "
     .replace(/\u201D/g, '"')   // right double quote  "
     .replace(/\u2026/g, '...')  // ellipsis  …
+    .replace(/\u2022/g, '-')   // bullet  •
+    .replace(/\u2023/g, '-')   // triangular bullet  ‣
+    .replace(/\u25CF/g, '-')   // black circle  ●
+    .replace(/\u2713/g, '+')   // checkmark  ✓
+    .replace(/[^\x00-\xFF]/g, '')  // strip any remaining non-Latin-1
 }
 
 const styles = StyleSheet.create({
